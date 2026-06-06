@@ -65,5 +65,26 @@ public class MaintenanceTaskService {
         return taskRepository.findByAssignedTo(user);
     }
 
+    public MaintenanceTask assignTask(Long taskId, Long userId) {
+
+        //  Find task
+        MaintenanceTask task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        //  Find user (technician)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        //  Assign technician
+        task.setAssignedTo(user);
+
+        // Update status
+        task.setStatus(MaintenanceTask.TaskStatus.ASSIGNED);
+
+        //  Save updated task
+        return taskRepository.save(task);
+    }
+
+
 
 }

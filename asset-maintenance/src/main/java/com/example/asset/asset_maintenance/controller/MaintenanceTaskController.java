@@ -2,6 +2,8 @@ package com.example.asset.asset_maintenance.controller;
 
 import com.example.asset.asset_maintenance.dto.CreateTaskRequest;
 import com.example.asset.asset_maintenance.entity.MaintenanceTask;
+import com.example.asset.asset_maintenance.entity.User;
+import com.example.asset.asset_maintenance.repository.UserRepository;
 import com.example.asset.asset_maintenance.service.MaintenanceTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,5 +33,14 @@ public class MaintenanceTaskController {
     public List<MaintenanceTask> getTechnicianTasks(@PathVariable Long userId) {
         return taskService.getTasksAssignedToTechnician(userId);
     }
+
+    @PutMapping("/{taskId}/assign/{userId}")
+    public MaintenanceTask assignTask(
+            @PathVariable Long taskId,
+            @PathVariable Long userId) {
+
+        return taskService.assignTask(taskId, userId);
+    }
+
 
 }
