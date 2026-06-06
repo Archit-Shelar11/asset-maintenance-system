@@ -85,6 +85,55 @@ public class MaintenanceTaskService {
         return taskRepository.save(task);
     }
 
+    public MaintenanceTask updateTaskStatus(Long taskId, String status) {
+
+        //  Find task
+        MaintenanceTask task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Convert String → Enum
+        MaintenanceTask.TaskStatus newStatus =
+                MaintenanceTask.TaskStatus.valueOf(status);
+
+        //  Update status
+        task.setStatus(newStatus);
+
+        //  Save
+        return taskRepository.save(task);
+    }
+    public MaintenanceTask approveTask(Long taskId, Long managerId, String remarks) {
+
+        // Find task
+        MaintenanceTask task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Find manager
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        //  Set approval details
+        task.setApprovedBy(manager);
+        task.setManagerRemarks(remarks);
+        task.setStatus(MaintenanceTask.TaskStatus.APPROVED);
+
+        return taskRepository.save(task);
+    }
+
+    public MaintenanceTask rejectTask(Long taskId, Long managerId, String remarks) {
+
+        MaintenanceTask task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        task.setApprovedBy(manager);
+        task.setManagerRemarks(remarks);
+        task.setStatus(MaintenanceTask.TaskStatus.REJECTED);
+
+        return taskRepository.save(task);
+    }
+
 
 
 }

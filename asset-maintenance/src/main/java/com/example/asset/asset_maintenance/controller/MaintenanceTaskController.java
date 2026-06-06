@@ -42,5 +42,29 @@ public class MaintenanceTaskController {
         return taskService.assignTask(taskId, userId);
     }
 
+    @PutMapping("/{taskId}/status/{status}")
+    public MaintenanceTask updateTaskStatus(
+            @PathVariable Long taskId,
+            @PathVariable String status) {
+
+        return taskService.updateTaskStatus(taskId, status);
+    }
+    @PutMapping("/{taskId}/approve/{managerId}")
+    public MaintenanceTask approveTask(
+            @PathVariable Long taskId,
+            @PathVariable Long managerId,
+            @RequestParam String remarks) {
+
+        return taskService.approveTask(taskId, managerId, remarks);
+    }
+    @PutMapping("/{taskId}/reject/{managerId}")
+    public MaintenanceTask rejectTask(
+            @PathVariable Long taskId,
+            @PathVariable Long managerId,
+            @RequestParam String remarks) {
+
+        return taskService.rejectTask(taskId, managerId, remarks);
+    }
+
 
 }
