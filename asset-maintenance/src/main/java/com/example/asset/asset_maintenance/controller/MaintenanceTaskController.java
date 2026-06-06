@@ -1,7 +1,9 @@
 package com.example.asset.asset_maintenance.controller;
 
 import com.example.asset.asset_maintenance.dto.CreateTaskRequest;
+import com.example.asset.asset_maintenance.dto.TaskHistoryResponse;
 import com.example.asset.asset_maintenance.entity.MaintenanceTask;
+import com.example.asset.asset_maintenance.entity.TaskHistory;
 import com.example.asset.asset_maintenance.entity.User;
 import com.example.asset.asset_maintenance.repository.UserRepository;
 import com.example.asset.asset_maintenance.service.MaintenanceTaskService;
@@ -79,6 +81,10 @@ public class MaintenanceTaskController {
         user.setPassword("1234");
 
         return userRepository.save(user);
+    }
+    @GetMapping("/{taskId}/history")
+    public List<TaskHistoryResponse> getHistory(@PathVariable Long taskId) {
+        return taskService.getTaskHistory(taskId);
     }
 
 

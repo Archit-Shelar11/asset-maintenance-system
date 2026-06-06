@@ -41,6 +41,7 @@ public class TaskHistory {
     @Column(columnDefinition = "TEXT")
     private String remarks;
 
+    @Column(name = "action_time")
     private LocalDateTime actionTime;
 
     @PrePersist
