@@ -17,6 +17,9 @@ public class MaintenanceTaskController {
     @Autowired
     private MaintenanceTaskService taskService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping
     public MaintenanceTask createTask(@RequestBody CreateTaskRequest request) {
         return taskService.createTask(request);
@@ -65,6 +68,19 @@ public class MaintenanceTaskController {
 
         return taskService.rejectTask(taskId, managerId, remarks);
     }
+
+
+    @PostMapping("/test")
+    public User createUser() {
+
+        User user = new User();
+        user.setFullName("Debug User");
+        user.setEmail("debug@test.com");
+        user.setPassword("1234");
+
+        return userRepository.save(user);
+    }
+
 
 
 }
