@@ -3,12 +3,12 @@ package com.example.asset.asset_maintenance.controller;
 import com.example.asset.asset_maintenance.dto.CreateTaskRequest;
 import com.example.asset.asset_maintenance.dto.TaskHistoryResponse;
 import com.example.asset.asset_maintenance.entity.MaintenanceTask;
-import com.example.asset.asset_maintenance.entity.User;
-import com.example.asset.asset_maintenance.repository.UserRepository;
 import com.example.asset.asset_maintenance.service.MaintenanceTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,71 +18,72 @@ public class MaintenanceTaskController {
     @Autowired
     private MaintenanceTaskService taskService;
 
-    @Autowired
-    private UserRepository userRepository;
-
     @PostMapping
-    public MaintenanceTask createTask(@RequestBody CreateTaskRequest request) {
-        return taskService.createTask(request);
+    @PreAuthorize("hasAnyRole('USER', 'TECHNICIAN', 'MANAGER')")
+    public MaintenanceTask createTask(@RequestBody CreateTaskRequest request, Principal principal) {
+        return taskService.createTask(request, principal.getName());
     }
 
-    @GetMapping("/user/{userId}")
-    public List<MaintenanceTask> getUserTasks(@PathVariable Long userId) {
-        return taskService.getTasksByUser(userId);
+    @GetMapping
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<MaintenanceTask> getAllTasks() {
+        return taskService.getAllTasks();
     }
 
-    @GetMapping("/technician/{userId}")
-    public List<MaintenanceTask> getTechnicianTasks(@PathVariable Long userId) {
-        return taskService.getTasksAssignedToTechnician(userId);
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('USER', 'TECHNICIAN', 'MANAGER')")
+    public List<MaintenanceTask> getUserTasks(Principal principal) {
+        return taskService.getTasksByUser(principal.getName());
     }
 
-    //  UPDATED: managerId added
-    @PutMapping("/{taskId}/assign/{managerId}/{userId}")
+    @GetMapping("/assigned")
+    @PreAuthorize("hasRole('TECHNICIAN')")
+    public List<MaintenanceTask> getTechnicianTasks(Principal principal) {
+        return taskService.getTasksAssignedToTechnician(principal.getName());
+    }
+
+    @PutMapping("/{taskId}/assign/{userId}")
+    @PreAuthorize("hasRole('MANAGER')")
     public MaintenanceTask assignTask(
             @PathVariable Long taskId,
-            @PathVariable Long managerId,
-            @PathVariable Long userId) {
+            @PathVariable Long userId,
+            Principal principal) {
 
-        return taskService.assignTask(taskId, managerId, userId);
+        return taskService.assignTask(taskId, principal.getName(), userId);
     }
 
     @PutMapping("/{taskId}/status/{status}")
+    @PreAuthorize("hasAnyRole('TECHNICIAN', 'MANAGER')")
     public MaintenanceTask updateTaskStatus(
             @PathVariable Long taskId,
-            @PathVariable String status) {
+            @PathVariable String status,
+            Principal principal) {
 
-        return taskService.updateTaskStatus(taskId, status);
+        return taskService.updateTaskStatus(taskId, status, principal.getName());
     }
 
-    @PutMapping("/{taskId}/approve/{managerId}")
+    @PutMapping("/{taskId}/approve")
+    @PreAuthorize("hasRole('MANAGER')")
     public MaintenanceTask approveTask(
             @PathVariable Long taskId,
-            @PathVariable Long managerId,
-            @RequestParam String remarks) {
+            @RequestParam String remarks,
+            Principal principal) {
 
-        return taskService.approveTask(taskId, managerId, remarks);
+        return taskService.approveTask(taskId, principal.getName(), remarks);
     }
 
-    @PutMapping("/{taskId}/reject/{managerId}")
+    @PutMapping("/{taskId}/reject")
+    @PreAuthorize("hasRole('MANAGER')")
     public MaintenanceTask rejectTask(
             @PathVariable Long taskId,
-            @PathVariable Long managerId,
-            @RequestParam String remarks) {
+            @RequestParam String remarks,
+            Principal principal) {
 
-        return taskService.rejectTask(taskId, managerId, remarks);
-    }
-
-    // Optional test API (you can remove later)
-    @PostMapping("/test")
-    public User createUser() {
-        User user = new User();
-        user.setFullName("Debug User");
-        user.setEmail("debug@test.com");
-        user.setPassword("1234");
-        return userRepository.save(user);
+        return taskService.rejectTask(taskId, principal.getName(), remarks);
     }
 
     @GetMapping("/{taskId}/history")
+    @PreAuthorize("isAuthenticated()")
     public List<TaskHistoryResponse> getHistory(@PathVariable Long taskId) {
         return taskService.getTaskHistory(taskId);
     }

@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
 
-    // it will fetch all the user
+    // it will gidve us  all the roles  of given user 
     List<UserRole> findByUser(User user);
 }

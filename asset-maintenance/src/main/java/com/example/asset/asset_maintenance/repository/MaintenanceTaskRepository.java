@@ -13,4 +13,6 @@ public interface MaintenanceTaskRepository extends JpaRepository<MaintenanceTask
 
 
     List<MaintenanceTask> findByAssignedTo(User user);
+
+    boolean existsByTaskCode(String taskCode);
 }

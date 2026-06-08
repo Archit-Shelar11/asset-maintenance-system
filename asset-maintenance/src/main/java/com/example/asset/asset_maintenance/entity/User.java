@@ -38,6 +38,7 @@ public class User {
     private LocalDateTime updatedAt;
 
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserRole> userRoles;
 
