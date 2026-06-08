@@ -50,6 +50,20 @@ public class DatabaseSeeder implements CommandLineRunner {
         Role userRole = roleRepository.findByRoleName(Role.RoleName.USER)
                 .orElseThrow(() -> new RuntimeException("USER role not found"));
 
+        // Ensure a manager user exists (outside of any count check)
+        User managerUser = userRepository.findByEmail("manager@factory.com")
+                .orElseGet(() -> {
+                    User newManager = User.builder()
+                            .fullName("Marcus Vance")
+                            .email("manager@factory.com")
+                            .password(passwordEncoder.encode("password123"))
+                            .isActive(true)
+                            .build();
+                    userRepository.save(newManager);
+                    userRoleRepository.save(UserRole.builder().user(newManager).role(managerRole).build());
+                    return newManager;
+                });
+
         // 2. Seed Users and UserRoles if users are empty
         if (userRepository.count() == 0) {
             // Admin
@@ -62,15 +76,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             userRepository.save(adminUser);
             userRoleRepository.save(UserRole.builder().user(adminUser).role(adminRole).build());
 
-            // Manager
-            User managerUser = User.builder()
-                    .fullName("Marcus Vance")
-                    .email("manager@factory.com")
-                    .password(passwordEncoder.encode("password123"))
-                    .isActive(true)
-                    .build();
-            userRepository.save(managerUser);
-            userRoleRepository.save(UserRole.builder().user(managerUser).role(managerRole).build());
+                                .email("manager@factory.com")
+                                .password(passwordEncoder.encode("password123"))
+                                .isActive(true)
+                                .build();
+                        userRepository.save(newManager);
+                        userRoleRepository.save(UserRole.builder().user(newManager).role(managerRole).build());
+                        return newManager;
+                    });
 
             // Technicians
             User tech1 = User.builder()
@@ -122,6 +135,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .installationDate(LocalDate.of(2024, 1, 15))
                     .status("OPERATIONAL")
                     .description("High-precision 5-axis CNC vertical milling machine.")
+                    .manager(managerUser)
                     .build();
 
             Asset press = Asset.builder()
@@ -133,6 +147,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .installationDate(LocalDate.of(2023, 11, 20))
                     .status("OPERATIONAL")
                     .description("Heavy-duty hydraulic metal stamping and pressing machine.")
+                    .manager(managerUser)
                     .build();
 
             Asset conveyor = Asset.builder()
@@ -144,6 +159,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .installationDate(LocalDate.of(2025, 2, 10))
                     .status("OPERATIONAL")
                     .description("Variable speed automated belt conveyor for main line assembly.")
+                    .manager(managerUser)
                     .build();
 
             Asset robot = Asset.builder()
@@ -155,6 +171,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .installationDate(LocalDate.of(2024, 8, 5))
                     .status("DEGRADED")
                     .description("Articulated welding robotic arm with automatic tool changer.")
+                    .manager(managerUser)
                     .build();
 
             assetRepository.saveAll(List.of(cnc, press, conveyor, robot));

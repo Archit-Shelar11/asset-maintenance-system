@@ -11,6 +11,7 @@ import com.example.asset.asset_maintenance.repository.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -80,7 +81,8 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/role/{roleName}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Transactional
     public UserDTO changeUserRole(@PathVariable Long userId, @PathVariable String roleName) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

@@ -28,6 +28,11 @@ public class Asset {
 
     private String location;
 
+    // New relationship to the manager who owns the asset
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id", nullable = false)
+    private com.example.asset.asset_maintenance.entity.User manager;
+
     private String manufacturer;
 
     private LocalDate installationDate;
