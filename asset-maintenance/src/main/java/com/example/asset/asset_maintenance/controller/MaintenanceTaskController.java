@@ -3,7 +3,6 @@ package com.example.asset.asset_maintenance.controller;
 import com.example.asset.asset_maintenance.dto.CreateTaskRequest;
 import com.example.asset.asset_maintenance.dto.TaskHistoryResponse;
 import com.example.asset.asset_maintenance.entity.MaintenanceTask;
-import com.example.asset.asset_maintenance.entity.TaskHistory;
 import com.example.asset.asset_maintenance.entity.User;
 import com.example.asset.asset_maintenance.repository.UserRepository;
 import com.example.asset.asset_maintenance.service.MaintenanceTaskService;
@@ -27,24 +26,24 @@ public class MaintenanceTaskController {
         return taskService.createTask(request);
     }
 
-
     @GetMapping("/user/{userId}")
     public List<MaintenanceTask> getUserTasks(@PathVariable Long userId) {
         return taskService.getTasksByUser(userId);
     }
-
 
     @GetMapping("/technician/{userId}")
     public List<MaintenanceTask> getTechnicianTasks(@PathVariable Long userId) {
         return taskService.getTasksAssignedToTechnician(userId);
     }
 
-    @PutMapping("/{taskId}/assign/{userId}")
+    //  UPDATED: managerId added
+    @PutMapping("/{taskId}/assign/{managerId}/{userId}")
     public MaintenanceTask assignTask(
             @PathVariable Long taskId,
+            @PathVariable Long managerId,
             @PathVariable Long userId) {
 
-        return taskService.assignTask(taskId, userId);
+        return taskService.assignTask(taskId, managerId, userId);
     }
 
     @PutMapping("/{taskId}/status/{status}")
@@ -54,6 +53,7 @@ public class MaintenanceTaskController {
 
         return taskService.updateTaskStatus(taskId, status);
     }
+
     @PutMapping("/{taskId}/approve/{managerId}")
     public MaintenanceTask approveTask(
             @PathVariable Long taskId,
@@ -62,6 +62,7 @@ public class MaintenanceTaskController {
 
         return taskService.approveTask(taskId, managerId, remarks);
     }
+
     @PutMapping("/{taskId}/reject/{managerId}")
     public MaintenanceTask rejectTask(
             @PathVariable Long taskId,
@@ -71,22 +72,18 @@ public class MaintenanceTaskController {
         return taskService.rejectTask(taskId, managerId, remarks);
     }
 
-
+    // Optional test API (you can remove later)
     @PostMapping("/test")
     public User createUser() {
-
         User user = new User();
         user.setFullName("Debug User");
         user.setEmail("debug@test.com");
         user.setPassword("1234");
-
         return userRepository.save(user);
     }
+
     @GetMapping("/{taskId}/history")
     public List<TaskHistoryResponse> getHistory(@PathVariable Long taskId) {
         return taskService.getTaskHistory(taskId);
     }
-
-
-
 }

@@ -30,6 +30,7 @@ public class MaintenanceTaskService {
     @Autowired
     private TaskHistoryRepository taskHistoryRepository;
 
+    //  CREATE TASK
     public MaintenanceTask createTask(CreateTaskRequest request) {
 
         Asset asset = assetRepository.findById(request.getAssetId())
@@ -41,73 +42,67 @@ public class MaintenanceTaskService {
         MaintenanceTask task = new MaintenanceTask();
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
-
         task.setPriority(MaintenanceTask.Priority.valueOf(request.getPriority()));
         task.setStatus(MaintenanceTask.TaskStatus.REPORTED);
-
         task.setAsset(asset);
         task.setReportedBy(user);
-
         task.setTaskCode("TSK-" + System.currentTimeMillis());
 
         MaintenanceTask savedTask = taskRepository.save(task);
 
-        addHistory(savedTask,
-                "CREATED",
-                null,
-                MaintenanceTask.TaskStatus.REPORTED,
-                user,
-                "Task created");
+        addHistory(savedTask, "CREATED", null,
+                MaintenanceTask.TaskStatus.REPORTED, user, "Task created");
 
         return savedTask;
     }
 
+    //  FETCH
     public List<MaintenanceTask> getTasksByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return taskRepository.findByReportedBy(user);
     }
 
     public List<MaintenanceTask> getTasksAssignedToTechnician(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return taskRepository.findByAssignedTo(user);
     }
 
-    public MaintenanceTask assignTask(Long taskId, Long userId) {
+    // ASSIGN TASK (UPDATED WITH OWNERSHIP)
+    public MaintenanceTask assignTask(Long taskId, Long managerId, Long userId) {
 
         MaintenanceTask task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User technician = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
 
-        task.setAssignedTo(user);
+        task.setAssignedTo(technician);
+        task.setAssignedBy(manager); //  IMPORTANT
         task.setStatus(MaintenanceTask.TaskStatus.ASSIGNED);
 
         MaintenanceTask savedTask = taskRepository.save(task);
 
-        addHistory(savedTask,
-                "ASSIGNED",
-                oldStatus,
+        addHistory(savedTask, "ASSIGNED", oldStatus,
                 MaintenanceTask.TaskStatus.ASSIGNED,
-                user,
-                "Task assigned to technician");
+                manager, "Task assigned by manager");
 
         return savedTask;
     }
 
+    //  STATUS UPDATE
     public MaintenanceTask updateTaskStatus(Long taskId, String status) {
 
         MaintenanceTask task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
-
         MaintenanceTask.TaskStatus newStatus =
                 MaintenanceTask.TaskStatus.valueOf(status);
 
@@ -115,17 +110,13 @@ public class MaintenanceTaskService {
 
         MaintenanceTask savedTask = taskRepository.save(task);
 
-        addHistory(savedTask,
-                "STATUS_UPDATE",
-                oldStatus,
-                newStatus,
-                task.getAssignedTo(),
-                "Status updated");
+        addHistory(savedTask, "STATUS_UPDATE", oldStatus,
+                newStatus, task.getAssignedTo(), "Status updated");
 
         return savedTask;
     }
 
-    // ✅ APPROVE TASK
+    //  APPROVE (WITH OWNERSHIP CHECK)
     public MaintenanceTask approveTask(Long taskId, Long managerId, String remarks) {
 
         MaintenanceTask task = taskRepository.findById(taskId)
@@ -133,6 +124,11 @@ public class MaintenanceTaskService {
 
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        if (task.getAssignedBy() == null ||
+                !task.getAssignedBy().getId().equals(managerId)) {
+            throw new RuntimeException("Only assigned manager can approve this task");
+        }
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
 
@@ -142,17 +138,14 @@ public class MaintenanceTaskService {
 
         MaintenanceTask savedTask = taskRepository.save(task);
 
-        addHistory(savedTask,
-                "APPROVED",
-                oldStatus,
+        addHistory(savedTask, "APPROVED", oldStatus,
                 MaintenanceTask.TaskStatus.APPROVED,
-                manager,
-                remarks);
+                manager, remarks);
 
         return savedTask;
     }
 
-
+    //  REJECT (WITH OWNERSHIP CHECK)
     public MaintenanceTask rejectTask(Long taskId, Long managerId, String remarks) {
 
         MaintenanceTask task = taskRepository.findById(taskId)
@@ -160,6 +153,11 @@ public class MaintenanceTaskService {
 
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        if (task.getAssignedBy() == null ||
+                !task.getAssignedBy().getId().equals(managerId)) {
+            throw new RuntimeException("Only assigned manager can reject this task");
+        }
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
 
@@ -169,21 +167,14 @@ public class MaintenanceTaskService {
 
         MaintenanceTask savedTask = taskRepository.save(task);
 
-
-        addHistory(savedTask,
-                "REJECTED",
-                oldStatus,
+        addHistory(savedTask, "REJECTED", oldStatus,
                 MaintenanceTask.TaskStatus.REJECTED,
-                manager,
-                remarks);
+                manager, remarks);
 
         return savedTask;
     }
 
-
-
-
-
+    //  HISTORY LOGGER
     private void addHistory(MaintenanceTask task,
                             String action,
                             MaintenanceTask.TaskStatus fromStatus,
@@ -201,20 +192,20 @@ public class MaintenanceTaskService {
 
         taskHistoryRepository.save(history);
     }
+
+    //  FETCH HISTORY (DTO)
     public List<TaskHistoryResponse> getTaskHistory(Long taskId) {
 
         List<TaskHistory> historyList = taskHistoryRepository.findByTaskId(taskId);
 
         return historyList.stream().map(h -> {
             TaskHistoryResponse res = new TaskHistoryResponse();
-
             res.setAction(h.getAction());
             res.setFromStatus(h.getFromStatus() != null ? h.getFromStatus().name() : null);
             res.setToStatus(h.getToStatus() != null ? h.getToStatus().name() : null);
             res.setPerformedBy(h.getPerformedBy().getFullName());
             res.setRemarks(h.getRemarks());
             res.setTime(h.getActionTime().toString());
-
             return res;
         }).toList();
     }
