@@ -15,6 +15,7 @@ const Assets = () => {
 
   // Create Asset Modal State
   const [showModal, setShowModal] = useState(false);
+  const [assetCode, setAssetCode] = useState('');
   const [assetName, setAssetName] = useState('');
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');

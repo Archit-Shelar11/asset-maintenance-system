@@ -167,7 +167,7 @@ const TaskDetail = () => {
                 <div style={styles.infoLabel}>Affected Machinery Asset</div>
                 <div style={styles.assetCard}>
                   <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px' }}>{task.asset?.assetName}</div>
-                  <div style={{ color: 'hsl(var(--primary))', fontSize: '13px', fontWeight: '500', margin: '4px 0' }}>{task.asset?.assetCode}</div>
+                  <div style={{ color: 'var(--primary)', fontSize: '13px', fontWeight: '500', margin: '4px 0' }}>{task.asset?.assetCode}</div>
                   <div style={styles.assetMetaRow}>
                     <MapPin size={12} /> <span>{task.asset?.location}</span>
                     <span style={{ margin: '0 4px' }}>•</span>
@@ -212,12 +212,12 @@ const TaskDetail = () => {
             
             {/* Comment Thread */}
             <div style={styles.commentList}>
-              {comments.map(comment => (
-                <div key={comment.id} style={styles.commentItem}>
+              {comments.map((comment, index) => (
+                <div key={index} style={styles.commentItem}>
                   <div style={styles.commentHeader}>
-                    <span style={styles.commentAuthor}>{comment.userFullName}</span>
+                    <span style={styles.commentAuthor}>{comment.user}</span>
                     <span style={styles.commentTime}>
-                      {new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(comment.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <p style={styles.commentMsg}>{comment.message}</p>
@@ -270,7 +270,7 @@ const TaskDetail = () => {
                     </div>
                     
                     <div style={styles.timelineActor}>
-                      Performed by: <span style={{ color: '#fff', fontWeight: '500' }}>{log.performedBy}</span>
+                      Performed by: <span style={{ color: 'var(--text-main)', fontWeight: '500' }}>{log.performedBy}</span>
                     </div>
 
                     {log.fromStatus && log.toStatus && (
@@ -307,7 +307,7 @@ const styles = {
   backBtn: {
     background: 'transparent',
     border: 'none',
-    color: 'hsl(var(--primary))',
+    color: 'var(--primary)',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
@@ -332,7 +332,7 @@ const styles = {
     fontFamily: 'var(--font-family-title)',
     fontWeight: '700',
     fontSize: '16px',
-    color: 'hsl(var(--primary))',
+    color: 'var(--primary)',
     letterSpacing: '0.05em',
   },
   title: {
@@ -355,7 +355,7 @@ const styles = {
     fontSize: '18px',
     color: 'var(--text-main)',
     marginBottom: '20px',
-    borderBottom: '1px solid var(--border-glass)',
+    borderBottom: '1px solid var(--border-color)',
     paddingBottom: '12px',
   },
   infoGrid: {
@@ -366,19 +366,19 @@ const styles = {
   infoBlock: {},
   infoLabel: {
     fontSize: '13px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
     fontWeight: '500',
     marginBottom: '6px',
   },
   infoText: {
     fontSize: '15px',
-    color: '#fff',
+    color: 'var(--text-main)',
     lineHeight: '1.6',
   },
   assetCard: {
     padding: '16px',
-    background: 'rgba(255, 255, 255, 0.01)',
-    border: '1px solid var(--border-glass)',
+    background: 'var(--bg-hover)',
+    border: '1px solid var(--border-color)',
     borderRadius: '10px',
   },
   assetMetaRow: {
@@ -386,7 +386,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '12px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
     marginTop: '6px',
   },
   peopleRow: {
@@ -394,48 +394,48 @@ const styles = {
     gap: '24px',
     marginTop: '24px',
     paddingTop: '20px',
-    borderTop: '1px solid var(--border-glass)',
+    borderTop: '1px solid var(--border-color)',
     flexWrap: 'wrap',
   },
   personBlock: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    background: 'rgba(255,255,255,0.01)',
+    background: 'var(--bg-hover)',
     padding: '10px 16px',
     borderRadius: '8px',
-    border: '1px solid var(--border-glass)',
+    border: '1px solid var(--border-color)',
   },
   personLabel: {
     fontSize: '12px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
     display: 'block',
   },
   personValue: {
     fontSize: '13px',
-    color: '#fff',
+    color: 'var(--text-main)',
     fontWeight: '500',
   },
   remarksBlock: {
     marginTop: '24px',
     padding: '16px',
-    background: 'rgba(0, 242, 254, 0.02)',
-    border: '1px dashed rgba(0, 242, 254, 0.2)',
+    background: '#eff6ff',
+    border: '1px dashed #bfdbfe',
     borderRadius: '10px',
   },
   remarksLabel: {
     fontSize: '13px',
-    color: 'hsl(var(--primary))',
+    color: 'var(--primary)',
     fontWeight: '600',
     marginBottom: '6px',
   },
   remarksText: {
     fontStyle: 'italic',
-    color: '#fff',
+    color: 'var(--text-main)',
   },
   remarksAuthor: {
     fontSize: '12px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
     marginTop: '8px',
     textAlign: 'right',
   },
@@ -450,8 +450,8 @@ const styles = {
   },
   commentItem: {
     padding: '14px',
-    background: 'rgba(255, 255, 255, 0.02)',
-    border: '1px solid var(--border-glass)',
+    background: 'var(--bg-hover)',
+    border: '1px solid var(--border-color)',
     borderRadius: '10px',
   },
   commentHeader: {
@@ -462,15 +462,15 @@ const styles = {
   commentAuthor: {
     fontSize: '13px',
     fontWeight: '600',
-    color: 'hsl(var(--primary))',
+    color: 'var(--primary)',
   },
   commentTime: {
     fontSize: '11px',
-    color: 'hsl(var(--text-dim))',
+    color: 'var(--text-dim)',
   },
   commentMsg: {
     fontSize: '14px',
-    color: '#fff',
+    color: 'var(--text-main)',
     lineHeight: '1.4',
   },
   emptyComments: {
@@ -479,7 +479,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '40px 0',
-    color: 'hsl(var(--text-dim))',
+    color: 'var(--text-dim)',
     textAlign: 'center',
   },
   commentForm: {
@@ -503,7 +503,7 @@ const styles = {
   },
   timelineLine: {
     width: '2px',
-    background: 'var(--border-glass)',
+    background: 'var(--border-color)',
     height: '100%',
     position: 'absolute',
     top: '12px',
@@ -512,9 +512,9 @@ const styles = {
     width: '12px',
     height: '12px',
     borderRadius: '50%',
-    background: 'hsl(var(--primary))',
-    border: '3px solid hsl(var(--bg-main))',
-    boxShadow: '0 0 8px 0 hsl(var(--primary))',
+    background: 'var(--primary)',
+    border: '3px solid var(--bg-main)',
+    boxShadow: '0 0 8px 0 rgba(37, 99, 235, 0.4)',
     zIndex: 2,
     marginTop: '6px',
   },
@@ -530,16 +530,16 @@ const styles = {
   timelineAction: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#fff',
+    color: 'var(--text-main)',
     letterSpacing: '0.02em',
   },
   timelineTime: {
     fontSize: '11px',
-    color: 'hsl(var(--text-dim))',
+    color: 'var(--text-dim)',
   },
   timelineActor: {
     fontSize: '12px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
   },
   timelineTransition: {
     display: 'flex',
@@ -550,12 +550,12 @@ const styles = {
   timelineRemarks: {
     fontSize: '13px',
     fontStyle: 'italic',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
     marginTop: '6px',
-    background: 'rgba(255, 255, 255, 0.01)',
+    background: 'var(--bg-hover)',
     padding: '8px 12px',
     borderRadius: '6px',
-    border: '1px solid var(--border-glass)',
+    border: '1px solid var(--border-color)',
   },
   loadingContainer: {
     display: 'flex',
@@ -563,7 +563,7 @@ const styles = {
     justifyContent: 'center',
     height: '60vh',
     fontSize: '18px',
-    color: 'hsl(var(--text-muted))',
+    color: 'var(--text-muted)',
   },
   errorBanner: {
     display: 'flex',
@@ -573,7 +573,7 @@ const styles = {
     background: 'rgba(244, 63, 94, 0.1)',
     border: '1px solid rgba(244, 63, 94, 0.2)',
     borderRadius: '12px',
-    color: 'hsl(var(--danger))',
+    color: 'var(--danger)',
   }
 };
 
