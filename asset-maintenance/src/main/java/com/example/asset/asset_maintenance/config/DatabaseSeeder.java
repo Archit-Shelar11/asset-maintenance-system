@@ -64,9 +64,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                     return newManager;
                 });
 
-        // 2. Seed Users and UserRoles if users are empty
-        if (userRepository.count() == 0) {
-            // Admin
+        // 2. Seed each user individually (idempotent – skips users that already exist)
+        // Admin
+        userRepository.findByEmail("admin@factory.com").orElseGet(() -> {
             User adminUser = User.builder()
                     .fullName("Chief Administrator")
                     .email("admin@factory.com")
@@ -75,17 +75,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(adminUser);
             userRoleRepository.save(UserRole.builder().user(adminUser).role(adminRole).build());
+            return adminUser;
+        });
 
-                                .email("manager@factory.com")
-                                .password(passwordEncoder.encode("password123"))
-                                .isActive(true)
-                                .build();
-                        userRepository.save(newManager);
-                        userRoleRepository.save(UserRole.builder().user(newManager).role(managerRole).build());
-                        return newManager;
-                    });
-
-            // Technicians
+        // Technician 1
+        userRepository.findByEmail("tech1@factory.com").orElseGet(() -> {
             User tech1 = User.builder()
                     .fullName("Elena Rostova")
                     .email("tech1@factory.com")
@@ -94,7 +88,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(tech1);
             userRoleRepository.save(UserRole.builder().user(tech1).role(technicianRole).build());
+            return tech1;
+        });
 
+        // Technician 2
+        userRepository.findByEmail("tech2@factory.com").orElseGet(() -> {
             User tech2 = User.builder()
                     .fullName("Julian Hales")
                     .email("tech2@factory.com")
@@ -103,8 +101,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(tech2);
             userRoleRepository.save(UserRole.builder().user(tech2).role(technicianRole).build());
+            return tech2;
+        });
 
-            // Operators (Users)
+        // Operator 1
+        userRepository.findByEmail("user1@factory.com").orElseGet(() -> {
             User op1 = User.builder()
                     .fullName("Frank Miller")
                     .email("user1@factory.com")
@@ -113,7 +114,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(op1);
             userRoleRepository.save(UserRole.builder().user(op1).role(userRole).build());
+            return op1;
+        });
 
+        // Operator 2
+        userRepository.findByEmail("user2@factory.com").orElseGet(() -> {
             User op2 = User.builder()
                     .fullName("Sarah Connor")
                     .email("user2@factory.com")
@@ -122,7 +127,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(op2);
             userRoleRepository.save(UserRole.builder().user(op2).role(userRole).build());
-        }
+            return op2;
+        });
+
 
         // 3. Seed Assets if empty
         if (assetRepository.count() == 0) {
