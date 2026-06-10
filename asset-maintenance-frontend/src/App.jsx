@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Assets from './pages/Assets';
 import TaskDetail from './pages/TaskDetail';
 
@@ -27,6 +28,9 @@ function App() {
           >
             {/* Dashboard (Home) */}
             <Route index element={<Dashboard />} />
+
+            {/* Admin Panel */}
+            <Route path="admin" element={<AdminDashboard />} />
 
             {/* Assets */}
             <Route path="assets" element={<Assets />} />

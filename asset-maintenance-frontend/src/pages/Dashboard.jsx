@@ -66,11 +66,11 @@ const Dashboard = () => {
       } else if (user.role === 'TECHNICIAN') {
         const taskRes = await api.get('/tasks/assigned');
         setTasks(taskRes.data);
-      } else if (user.role === 'MANAGER' || user.role === 'ADMIN') {
+      } else if (user.role === 'MANAGER') {
         const taskRes = await api.get('/tasks');
         setTasks(taskRes.data);
 
-        // Managers also need lists of technicians/users and material requests
+        // Managers need lists of technicians/users and material requests
         const userRes = await api.get('/users');
         setUsers(userRes.data);
 
@@ -170,8 +170,15 @@ const Dashboard = () => {
 
   const handleApproveRejectTaskSubmit = async (e) => {
     e.preventDefault();
-    const { taskId, action } = showRemarksModal;
-    const endpoint = action === 'APPROVE' ? 'approve' : 'reject';
+    const { taskId, action, taskStatus } = showRemarksModal;
+    let endpoint;
+    if (action === 'APPROVE') {
+      endpoint = 'approve';
+    } else if (taskStatus === 'REPORTED') {
+      endpoint = 'reject-reported';
+    } else {
+      endpoint = 'reject';
+    }
 
     try {
       await api.put(`/tasks/${taskId}/${endpoint}?remarks=${encodeURIComponent(remarks)}`);
@@ -207,7 +214,7 @@ const Dashboard = () => {
   const getStats = () => {
     const total = tasks.length;
     const pending = tasks.filter(t => t.status === 'REPORTED').length;
-    const assigned = tasks.filter(t => t.status === 'ASSIGNED' || t.status === 'UNDER_WAY').length;
+    const assigned = tasks.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'MATERIAL_REQUESTED', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(t.status)).length;
     const completed = tasks.filter(t => t.status === 'COMPLETED').length;
     const approved = tasks.filter(t => t.status === 'APPROVED').length;
     return { total, pending, assigned, completed, approved };
@@ -217,7 +224,7 @@ const Dashboard = () => {
     return <div style={styles.loadingContainer}>Loading dashboard...</div>;
   }
 
-  const stats = (user.role === 'MANAGER' || user.role === 'ADMIN') ? getStats() : null;
+  const stats = (user.role === 'MANAGER') ? getStats() : null;
 
   return (
     <div className="animate-fade-in">
@@ -236,8 +243,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* --- MANAGER & ADMIN VIEW --- */}
-      {(user.role === 'MANAGER' || user.role === 'ADMIN') && (
+      {/* --- MANAGER VIEW --- */}
+      {user.role === 'MANAGER' && (
         <div>
           {/* Stats Section */}
           <div style={styles.statsGrid}>
@@ -306,7 +313,7 @@ const Dashboard = () => {
                       <td>{task.assignedTo ? task.assignedTo.fullName : <span style={{ color: 'hsl(var(--text-dim))' }}>None</span>}</td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={styles.actionGroup}>
-                          {/* Assignment option for Reported tasks */}
+                          {/* Assignment + Reject option for Reported tasks */}
                           {task.status === 'REPORTED' && (
                             assigningTaskId === task.id ? (
                               <div style={{ display: 'flex', gap: '8px' }}>
@@ -325,7 +332,16 @@ const Dashboard = () => {
                                 <button onClick={() => setAssigningTaskId(null)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>Cancel</button>
                               </div>
                             ) : (
-                              <button onClick={() => setAssigningTaskId(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
+                              <>
+                                <button onClick={() => setAssigningTaskId(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
+                                <button 
+                                  onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'REPORTED' })} 
+                                  className="btn btn-danger" 
+                                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                                >
+                                  Reject
+                                </button>
+                              </>
                             )
                           )}
 
@@ -333,14 +349,14 @@ const Dashboard = () => {
                           {task.status === 'COMPLETED' && (
                             <>
                               <button 
-                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'APPROVE' })} 
+                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'APPROVE', taskStatus: 'COMPLETED' })} 
                                 className="btn btn-primary" 
                                 style={{ padding: '6px 12px', fontSize: '13px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', boxShadow: 'none' }}
                               >
                                 Approve
                               </button>
                               <button 
-                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT' })} 
+                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'COMPLETED' })} 
                                 className="btn btn-danger" 
                                 style={{ padding: '6px 12px', fontSize: '13px' }}
                               >
@@ -414,50 +430,8 @@ const Dashboard = () => {
                 </table>
               </div>
             </section>
-
-            {/* Promote/Manage User Roles */}
-            <section className="glass-card">
-              <h2 style={styles.sectionTitle}>User Operations & Roles</h2>
-              <div className="table-container">
-                <table className="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Current Role</th>
-                      <th style={{ textAlign: 'right' }}>Update Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(u => (
-                      <tr key={u.id}>
-                        <td>{u.fullName}</td>
-                        <td>{u.email}</td>
-                        <td>
-                          <span className="badge badge-role">{u.role}</span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          {u.id !== user.id && (
-                            <select
-                              className="form-input form-select"
-                              style={{ width: '140px', padding: '4px 8px', fontSize: '13px' }}
-                              value={u.role}
-                              onChange={(e) => handleUserRoleChange(u.id, e.target.value)}
-                            >
-                              <option value="USER">USER</option>
-                              <option value="TECHNICIAN">TECHNICIAN</option>
-                              <option value="MANAGER">MANAGER</option>
-                              <option value="ADMIN">ADMIN</option>
-                            </select>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
           </div>
+
         </div>
       )}
 
@@ -497,14 +471,14 @@ const Dashboard = () => {
                       <div style={styles.actionGroup}>
                         {task.status === 'ASSIGNED' && (
                           <button 
-                            onClick={() => handleUpdateStatus(task.id, 'UNDER_WAY')} 
+                            onClick={() => handleUpdateStatus(task.id, 'IN_PROGRESS')} 
                             className="btn btn-primary"
                             style={{ padding: '6px 12px', fontSize: '13px' }}
                           >
                             Start Work
                           </button>
                         )}
-                        {task.status === 'UNDER_WAY' && (
+                        {['IN_PROGRESS', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(task.status) && (
                           <>
                             <button 
                               onClick={() => handleUpdateStatus(task.id, 'COMPLETED')} 

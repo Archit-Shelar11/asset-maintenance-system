@@ -148,7 +148,7 @@ public class MaintenanceTaskService {
         return savedTask;
     }
 
-    //  APPROVE (WITH OWNERSHIP CHECK)
+    //  APPROVE (any manager/admin can approve a COMPLETED task)
     public MaintenanceTask approveTask(Long taskId, String managerEmail, String remarks) {
         if (taskId == null) {
             throw new IllegalArgumentException("Task ID must not be null");
@@ -163,9 +163,8 @@ public class MaintenanceTaskService {
         User manager = userRepository.findByEmail(managerEmail)
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
 
-        if (task.getAssignedBy() == null ||
-                !task.getAssignedBy().getEmail().equals(managerEmail)) {
-            throw new RuntimeException("Only assigned manager can approve this task");
+        if (task.getStatus() != MaintenanceTask.TaskStatus.COMPLETED) {
+            throw new RuntimeException("Only COMPLETED tasks can be approved");
         }
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
@@ -183,7 +182,7 @@ public class MaintenanceTaskService {
         return savedTask;
     }
 
-    //  REJECT (WITH OWNERSHIP CHECK)
+    //  REJECT (any manager/admin can reject a COMPLETED task)
     public MaintenanceTask rejectTask(Long taskId, String managerEmail, String remarks) {
         if (taskId == null) {
             throw new IllegalArgumentException("Task ID must not be null");
@@ -198,9 +197,8 @@ public class MaintenanceTaskService {
         User manager = userRepository.findByEmail(managerEmail)
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
 
-        if (task.getAssignedBy() == null ||
-                !task.getAssignedBy().getEmail().equals(managerEmail)) {
-            throw new RuntimeException("Only assigned manager can reject this task");
+        if (task.getStatus() != MaintenanceTask.TaskStatus.COMPLETED) {
+            throw new RuntimeException("Only COMPLETED tasks can be rejected back");
         }
 
         MaintenanceTask.TaskStatus oldStatus = task.getStatus();
@@ -212,6 +210,40 @@ public class MaintenanceTaskService {
         MaintenanceTask savedTask = taskRepository.save(task);
 
         addHistory(savedTask, "REJECTED", oldStatus,
+                MaintenanceTask.TaskStatus.REJECTED,
+                manager, remarks);
+
+        return savedTask;
+    }
+
+    //  REJECT REPORTED TASK (manager rejects a task before assignment)
+    public MaintenanceTask rejectReportedTask(Long taskId, String managerEmail, String remarks) {
+        if (taskId == null) {
+            throw new IllegalArgumentException("Task ID must not be null");
+        }
+        if (managerEmail == null) {
+            throw new IllegalArgumentException("Manager email must not be null");
+        }
+
+        MaintenanceTask task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        User manager = userRepository.findByEmail(managerEmail)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        if (task.getStatus() != MaintenanceTask.TaskStatus.REPORTED) {
+            throw new RuntimeException("Only REPORTED tasks can be rejected at this stage");
+        }
+
+        MaintenanceTask.TaskStatus oldStatus = task.getStatus();
+
+        task.setApprovedBy(manager);
+        task.setManagerRemarks(remarks);
+        task.setStatus(MaintenanceTask.TaskStatus.REJECTED);
+
+        MaintenanceTask savedTask = taskRepository.save(task);
+
+        addHistory(savedTask, "REJECTED_REPORTED", oldStatus,
                 MaintenanceTask.TaskStatus.REJECTED,
                 manager, remarks);
 

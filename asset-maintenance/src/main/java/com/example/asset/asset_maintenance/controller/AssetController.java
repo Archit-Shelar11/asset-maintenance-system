@@ -16,9 +16,9 @@ public class AssetController {
     @Autowired
     private AssetService assetService;
 
-    // CREATE ASSET - only MANAGER can create and it will be linked to the creator
+    // CREATE ASSET - MANAGER and ADMIN can create assets
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public Asset createAsset(@RequestBody Asset asset, Principal principal) {
         return assetService.createAsset(asset, principal);
     }

@@ -29,19 +29,19 @@ public class MaterialRequestController {
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public MaterialRequest approveRequest(@PathVariable Long id, Principal principal) {
         return materialService.approveRequest(id, principal.getName());
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public MaterialRequest rejectRequest(@PathVariable Long id, Principal principal) {
         return materialService.rejectRequest(id, principal.getName());
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public List<MaterialRequest> getAllRequests() {
         return materialService.getAllRequests();
     }

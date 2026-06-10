@@ -25,7 +25,7 @@ public class MaintenanceTaskController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public List<MaintenanceTask> getAllTasks() {
         return taskService.getAllTasks();
     }
@@ -43,7 +43,7 @@ public class MaintenanceTaskController {
     }
 
     @PutMapping("/{taskId}/assign/{userId}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public MaintenanceTask assignTask(
             @PathVariable Long taskId,
             @PathVariable Long userId,
@@ -63,7 +63,7 @@ public class MaintenanceTaskController {
     }
 
     @PutMapping("/{taskId}/approve")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public MaintenanceTask approveTask(
             @PathVariable Long taskId,
             @RequestParam String remarks,
@@ -73,7 +73,7 @@ public class MaintenanceTaskController {
     }
 
     @PutMapping("/{taskId}/reject")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public MaintenanceTask rejectTask(
             @PathVariable Long taskId,
             @RequestParam String remarks,
@@ -81,6 +81,17 @@ public class MaintenanceTaskController {
 
         return taskService.rejectTask(taskId, principal.getName(), remarks);
     }
+
+    @PutMapping("/{taskId}/reject-reported")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    public MaintenanceTask rejectReportedTask(
+            @PathVariable Long taskId,
+            @RequestParam String remarks,
+            Principal principal) {
+
+        return taskService.rejectReportedTask(taskId, principal.getName(), remarks);
+    }
+
 
     @GetMapping("/{taskId}/history")
     @PreAuthorize("isAuthenticated()")

@@ -7,7 +7,8 @@ import {
   Settings, 
   LogOut, 
   User as UserIcon, 
-  Layers 
+  Layers,
+  Shield
 } from 'lucide-react';
 
 const Layout = () => {
@@ -65,6 +66,19 @@ const Layout = () => {
             <Layers size={18} />
             <span>Assets</span>
           </NavLink>
+
+          {user?.role === 'ADMIN' && (
+            <NavLink 
+              to="/admin" 
+              style={({ isActive }) => ({
+                ...styles.navItem,
+                ...(isActive ? styles.navItemActive : {})
+              })}
+            >
+              <Shield size={18} />
+              <span>Admin Panel</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* Bottom Actions */}

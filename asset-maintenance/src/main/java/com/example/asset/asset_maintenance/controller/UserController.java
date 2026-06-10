@@ -81,7 +81,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/role/{roleName}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDTO changeUserRole(@PathVariable Long userId, @PathVariable String roleName) {
         User user = userRepository.findById(userId)
@@ -100,6 +100,7 @@ public class UserController {
         // Delete existing roles for this user
         if (user.getUserRoles() != null) {
             userRoleRepository.deleteAll(user.getUserRoles());
+            user.getUserRoles().clear();
         }
 
         // Assign new role
@@ -108,12 +109,11 @@ public class UserController {
                 .role(newRole)
                 .build();
         userRoleRepository.save(newMapping);
+        user.getUserRoles().add(newMapping);
 
-        // Reload user to get fresh associations
-        User updatedUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found after update"));
+        userRepository.saveAndFlush(user);
 
-        return mapToDTO(updatedUser);
+        return mapToDTO(user);
     }
 
     private UserDTO mapToDTO(User u) {
