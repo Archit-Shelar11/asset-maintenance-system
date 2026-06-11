@@ -35,18 +35,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/users/register").permitAll()
-                .anyRequest().authenticated()
-            )
-            .httpBasic(basic -> basic.authenticationEntryPoint(customAuthEntryPoint()));
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        return http.build();
-    }
+    http
+        .cors() // ✅ enable CORS
+        .and()  // ✅ VERY IMPORTANT
+        .csrf().disable() // ✅ disable CSRF
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/users/register").permitAll()
+            .anyRequest().authenticated()
+        )
+        .httpBasic();
+
+    return http.build();
+}
+
+
 }
