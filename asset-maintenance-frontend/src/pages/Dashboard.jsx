@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, api } from '../context/AuthContext';
-import { 
-  Plus, 
-  Send, 
-  ClipboardList, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  UserPlus, 
-  UserCheck,
-  Package,
+import { useAuth } from '../context/AuthContext';
+import api from '../api';
+import {
+  Send,
+  ClipboardList,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   Wrench,
   ExternalLink
 } from 'lucide-react';
@@ -43,38 +40,39 @@ const Dashboard = () => {
   const [materialRequests, setMaterialRequests] = useState([]);
   const [assigningTaskId, setAssigningTaskId] = useState(null);
   const [selectedTechId, setSelectedTechId] = useState('');
-  const [showRemarksModal, setShowRemarksModal] = useState(null); // { taskId, action: 'APPROVE' | 'REJECT' }
+  const [showRemarksModal, setShowRemarksModal] = useState(null); // { taskId, action, taskStatus }
   const [remarks, setRemarks] = useState('');
 
-  // Load dashboard data based on role
   useEffect(() => {
-    fetchDashboardData();
-  }, [user.role]);
+    if (user?.role) {
+      fetchDashboardData();
+    }
+  }, [user?.role]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     setError('');
+
     try {
-      // 1. Fetch assets (needed by Operator to report tasks, and Manager for reference)
+      // Assets needed for USER reporting, and useful for others too
       const assetRes = await api.get('/assets');
       setAssets(assetRes.data);
 
-      // 2. Fetch tasks depending on role
-      if (user.role === 'USER') {
+      if (user?.role === 'USER') {
         const taskRes = await api.get('/tasks/my');
         setTasks(taskRes.data);
-      } else if (user.role === 'TECHNICIAN') {
+      } else if (user?.role === 'TECHNICIAN') {
         const taskRes = await api.get('/tasks/assigned');
         setTasks(taskRes.data);
-      } else if (user.role === 'MANAGER') {
-        const taskRes = await api.get('/tasks');
+      } else if (user?.role === 'MANAGER') {
+        const [taskRes, userRes, materialRes] = await Promise.all([
+          api.get('/tasks'),
+          api.get('/users'),
+          api.get('/materials'),
+        ]);
+
         setTasks(taskRes.data);
-
-        // Managers need lists of technicians/users and material requests
-        const userRes = await api.get('/users');
         setUsers(userRes.data);
-
-        const materialRes = await api.get('/materials');
         setMaterialRequests(materialRes.data);
       }
     } catch (err) {
@@ -85,7 +83,7 @@ const Dashboard = () => {
     }
   };
 
-  // --- Operator Actions ---
+  // --- USER Actions ---
   const handleReportTask = async (e) => {
     e.preventDefault();
     setError('');
@@ -109,8 +107,7 @@ const Dashboard = () => {
       setDescription('');
       setPriority('LOW');
       setAssetId('');
-      
-      // Refresh tasks
+
       fetchDashboardData();
     } catch (err) {
       console.error(err);
@@ -118,7 +115,7 @@ const Dashboard = () => {
     }
   };
 
-  // --- Technician Actions ---
+  // --- TECHNICIAN Actions ---
   const handleUpdateStatus = async (taskId, newStatus) => {
     try {
       await api.put(`/tasks/${taskId}/status/${newStatus}`);
@@ -130,6 +127,7 @@ const Dashboard = () => {
 
   const handleRequestMaterialSubmit = async (e) => {
     e.preventDefault();
+
     if (!materialName || quantity < 1) {
       alert('Please fill in material name and quantity');
       return;
@@ -141,17 +139,18 @@ const Dashboard = () => {
         materialName,
         quantity: parseInt(quantity, 10),
       });
-      
+
       alert('Material request submitted successfully!');
       setShowMaterialModal(false);
       setMaterialName('');
       setQuantity(1);
+      fetchDashboardData();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to request material');
     }
   };
 
-  // --- Manager Actions ---
+  // --- MANAGER Actions ---
   const handleAssignTask = async (taskId) => {
     if (!selectedTechId) {
       alert('Please select a technician to assign');
@@ -170,8 +169,10 @@ const Dashboard = () => {
 
   const handleApproveRejectTaskSubmit = async (e) => {
     e.preventDefault();
+
     const { taskId, action, taskStatus } = showRemarksModal;
     let endpoint;
+
     if (action === 'APPROVE') {
       endpoint = 'approve';
     } else if (taskStatus === 'REPORTED') {
@@ -192,6 +193,7 @@ const Dashboard = () => {
 
   const handleMaterialApproval = async (requestId, isApprove) => {
     const endpoint = isApprove ? 'approve' : 'reject';
+
     try {
       await api.put(`/materials/${requestId}/${endpoint}`);
       fetchDashboardData();
@@ -210,13 +212,15 @@ const Dashboard = () => {
     }
   };
 
-  // Helper Stats generator for Managers
   const getStats = () => {
     const total = tasks.length;
-    const pending = tasks.filter(t => t.status === 'REPORTED').length;
-    const assigned = tasks.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'MATERIAL_REQUESTED', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(t.status)).length;
-    const completed = tasks.filter(t => t.status === 'COMPLETED').length;
-    const approved = tasks.filter(t => t.status === 'APPROVED').length;
+    const pending = tasks.filter((t) => t.status === 'REPORTED').length;
+    const assigned = tasks.filter((t) =>
+      ['ASSIGNED', 'IN_PROGRESS', 'MATERIAL_REQUESTED', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(t.status)
+    ).length;
+    const completed = tasks.filter((t) => t.status === 'COMPLETED').length;
+    const approved = tasks.filter((t) => t.status === 'APPROVED').length;
+
     return { total, pending, assigned, completed, approved };
   };
 
@@ -224,16 +228,24 @@ const Dashboard = () => {
     return <div style={styles.loadingContainer}>Loading dashboard...</div>;
   }
 
-  const stats = (user.role === 'MANAGER') ? getStats() : null;
+  const stats = user?.role === 'MANAGER' ? getStats() : null;
 
   return (
     <div className="animate-fade-in">
       <header style={styles.header}>
         <div>
           <h1 style={{ fontSize: '28px', color: 'var(--text-main)' }}>Dashboard</h1>
-          <p>Logged in as: <span style={{ color: 'var(--primary)', fontWeight: '500' }}>{user.fullName}</span> ({user.role})</p>
+          <p>
+            Logged in as:{' '}
+            <span style={{ color: 'var(--primary)', fontWeight: '500' }}>
+              {user?.fullName}
+            </span>{' '}
+            ({user?.role})
+          </p>
         </div>
-        <button onClick={fetchDashboardData} className="btn btn-secondary">Refresh Data</button>
+        <button onClick={fetchDashboardData} className="btn btn-secondary">
+          Refresh Data
+        </button>
       </header>
 
       {error && (
@@ -244,9 +256,9 @@ const Dashboard = () => {
       )}
 
       {/* --- MANAGER VIEW --- */}
-      {user.role === 'MANAGER' && (
+      {user?.role === 'MANAGER' && (
         <div>
-          {/* Stats Section */}
+          {/* Stats */}
           <div style={styles.statsGrid}>
             <div className="glass-card" style={styles.statCard}>
               <ClipboardList size={28} color="hsl(var(--primary))" />
@@ -255,6 +267,7 @@ const Dashboard = () => {
                 <div style={styles.statLabel}>Total Tasks</div>
               </div>
             </div>
+
             <div className="glass-card" style={styles.statCard}>
               <Clock size={28} color="hsl(var(--warning))" />
               <div>
@@ -262,6 +275,7 @@ const Dashboard = () => {
                 <div style={styles.statLabel}>Pending Assignment</div>
               </div>
             </div>
+
             <div className="glass-card" style={styles.statCard}>
               <Wrench size={28} color="#818cf8" />
               <div>
@@ -269,6 +283,7 @@ const Dashboard = () => {
                 <div style={styles.statLabel}>Under Maintenance</div>
               </div>
             </div>
+
             <div className="glass-card" style={styles.statCard}>
               <CheckCircle size={28} color="hsl(var(--success))" />
               <div>
@@ -278,7 +293,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Manage Tasks Section */}
+          {/* Manage Tasks */}
           <section className="glass-card" style={{ marginBottom: '32px' }}>
             <h2 style={styles.sectionTitle}>Maintenance Task Overview</h2>
             <div className="table-container">
@@ -295,7 +310,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map(task => (
+                  {tasks.map((task) => (
                     <tr key={task.id}>
                       <td style={{ fontWeight: '600', color: 'hsl(var(--primary))' }}>{task.taskCode}</td>
                       <td>{task.title}</td>
@@ -310,33 +325,64 @@ const Dashboard = () => {
                           {task.status}
                         </span>
                       </td>
-                      <td>{task.assignedTo ? task.assignedTo.fullName : <span style={{ color: 'hsl(var(--text-dim))' }}>None</span>}</td>
+                      <td>
+                        {task.assignedTo ? task.assignedTo.fullName : (
+                          <span style={{ color: 'hsl(var(--text-dim))' }}>None</span>
+                        )}
+                      </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={styles.actionGroup}>
-                          {/* Assignment + Reject option for Reported tasks */}
                           {task.status === 'REPORTED' && (
                             assigningTaskId === task.id ? (
                               <div style={{ display: 'flex', gap: '8px' }}>
-                                <select 
+                                <select
                                   className="form-input form-select"
                                   style={{ width: '160px', padding: '6px 12px' }}
                                   value={selectedTechId}
                                   onChange={(e) => setSelectedTechId(e.target.value)}
                                 >
                                   <option value="">Select Tech...</option>
-                                  {users.filter(u => u.role === 'TECHNICIAN').map(tech => (
-                                    <option key={tech.id} value={tech.id}>{tech.fullName}</option>
-                                  ))}
+                                  {users
+                                    .filter((u) => u.role === 'TECHNICIAN')
+                                    .map((tech) => (
+                                      <option key={tech.id} value={tech.id}>
+                                        {tech.fullName}
+                                      </option>
+                                    ))}
                                 </select>
-                                <button onClick={() => handleAssignTask(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
-                                <button onClick={() => setAssigningTaskId(null)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>Cancel</button>
+                                <button
+                                  onClick={() => handleAssignTask(task.id)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                                >
+                                  Assign
+                                </button>
+                                <button
+                                  onClick={() => setAssigningTaskId(null)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                                >
+                                  Cancel
+                                </button>
                               </div>
                             ) : (
                               <>
-                                <button onClick={() => setAssigningTaskId(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
-                                <button 
-                                  onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'REPORTED' })} 
-                                  className="btn btn-danger" 
+                                <button
+                                  onClick={() => setAssigningTaskId(task.id)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                                >
+                                  Assign
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setShowRemarksModal({
+                                      taskId: task.id,
+                                      action: 'REJECT',
+                                      taskStatus: 'REPORTED',
+                                    })
+                                  }
+                                  className="btn btn-danger"
                                   style={{ padding: '6px 12px', fontSize: '13px' }}
                                 >
                                   Reject
@@ -345,19 +391,37 @@ const Dashboard = () => {
                             )
                           )}
 
-                          {/* Approval / Rejection options for Completed tasks */}
                           {task.status === 'COMPLETED' && (
                             <>
-                              <button 
-                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'APPROVE', taskStatus: 'COMPLETED' })} 
-                                className="btn btn-primary" 
-                                style={{ padding: '6px 12px', fontSize: '13px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', boxShadow: 'none' }}
+                              <button
+                                onClick={() =>
+                                  setShowRemarksModal({
+                                    taskId: task.id,
+                                    action: 'APPROVE',
+                                    taskStatus: 'COMPLETED',
+                                  })
+                                }
+                                className="btn btn-primary"
+                                style={{
+                                  padding: '6px 12px',
+                                  fontSize: '13px',
+                                  background: 'rgba(52, 211, 153, 0.15)',
+                                  color: '#34d399',
+                                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                                  boxShadow: 'none',
+                                }}
                               >
                                 Approve
                               </button>
-                              <button 
-                                onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'COMPLETED' })} 
-                                className="btn btn-danger" 
+                              <button
+                                onClick={() =>
+                                  setShowRemarksModal({
+                                    taskId: task.id,
+                                    action: 'REJECT',
+                                    taskStatus: 'COMPLETED',
+                                  })
+                                }
+                                className="btn btn-danger"
                                 style={{ padding: '6px 12px', fontSize: '13px' }}
                               >
                                 Reject
@@ -365,17 +429,23 @@ const Dashboard = () => {
                             </>
                           )}
 
-                          {/* View details */}
-                          <button onClick={() => navigate(`/tasks/${task.id}`)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                          <button
+                            onClick={() => navigate(`/tasks/${task.id}`)}
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '13px' }}
+                          >
                             <ExternalLink size={14} />
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
+
                   {tasks.length === 0 && (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>No tasks found.</td>
+                      <td colSpan="7" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                        No tasks found.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -383,7 +453,7 @@ const Dashboard = () => {
             </div>
           </section>
 
-          {/* Material Requests Section */}
+          {/* Material Requests */}
           <div style={styles.managerDoubleGrid}>
             <section className="glass-card">
               <h2 style={styles.sectionTitle}>Material / Part Requests</h2>
@@ -400,7 +470,7 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {materialRequests.map(req => (
+                    {materialRequests.map((req) => (
                       <tr key={req.id}>
                         <td style={{ fontWeight: '600' }}>{req.materialName}</td>
                         <td>{req.quantity}</td>
@@ -414,16 +484,31 @@ const Dashboard = () => {
                         <td style={{ textAlign: 'right' }}>
                           {req.status === 'PENDING' && (
                             <div style={styles.actionGroup}>
-                              <button onClick={() => handleMaterialApproval(req.id, true)} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '12px' }}>Approve</button>
-                              <button onClick={() => handleMaterialApproval(req.id, false)} className="btn btn-danger" style={{ padding: '6px 10px', fontSize: '12px' }}>Reject</button>
+                              <button
+                                onClick={() => handleMaterialApproval(req.id, true)}
+                                className="btn btn-primary"
+                                style={{ padding: '6px 10px', fontSize: '12px' }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleMaterialApproval(req.id, false)}
+                                className="btn btn-danger"
+                                style={{ padding: '6px 10px', fontSize: '12px' }}
+                              >
+                                Reject
+                              </button>
                             </div>
                           )}
                         </td>
                       </tr>
                     ))}
+
                     {materialRequests.length === 0 && (
                       <tr>
-                        <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>No material requests.</td>
+                        <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                          No material requests.
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -431,12 +516,11 @@ const Dashboard = () => {
               </div>
             </section>
           </div>
-
         </div>
       )}
 
       {/* --- TECHNICIAN VIEW --- */}
-      {user.role === 'TECHNICIAN' && (
+      {user?.role === 'TECHNICIAN' && (
         <section className="glass-card">
           <h2 style={styles.sectionTitle}>Assigned Maintenance Workorders</h2>
           <div className="table-container">
@@ -452,7 +536,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {tasks.map(task => (
+                {tasks.map((task) => (
                   <tr key={task.id}>
                     <td style={{ fontWeight: '600', color: 'hsl(var(--primary))' }}>{task.taskCode}</td>
                     <td>{task.title}</td>
@@ -470,25 +554,34 @@ const Dashboard = () => {
                     <td style={{ textAlign: 'right' }}>
                       <div style={styles.actionGroup}>
                         {task.status === 'ASSIGNED' && (
-                          <button 
-                            onClick={() => handleUpdateStatus(task.id, 'IN_PROGRESS')} 
+                          <button
+                            onClick={() => handleUpdateStatus(task.id, 'IN_PROGRESS')}
                             className="btn btn-primary"
                             style={{ padding: '6px 12px', fontSize: '13px' }}
                           >
                             Start Work
                           </button>
                         )}
+
                         {['IN_PROGRESS', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(task.status) && (
                           <>
-                            <button 
-                              onClick={() => handleUpdateStatus(task.id, 'COMPLETED')} 
+                            <button
+                              onClick={() => handleUpdateStatus(task.id, 'COMPLETED')}
                               className="btn btn-primary"
-                              style={{ padding: '6px 12px', fontSize: '13px', background: 'var(--success)', color: '#fff' }}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '13px',
+                                background: 'var(--success)',
+                                color: '#fff',
+                              }}
                             >
                               Mark Completed
                             </button>
-                            <button 
-                              onClick={() => { setSelectedTaskId(task.id); setShowMaterialModal(true); }}
+                            <button
+                              onClick={() => {
+                                setSelectedTaskId(task.id);
+                                setShowMaterialModal(true);
+                              }}
                               className="btn btn-secondary"
                               style={{ padding: '6px 12px', fontSize: '13px' }}
                             >
@@ -496,16 +589,24 @@ const Dashboard = () => {
                             </button>
                           </>
                         )}
-                        <button onClick={() => navigate(`/tasks/${task.id}`)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+
+                        <button
+                          onClick={() => navigate(`/tasks/${task.id}`)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '13px' }}
+                        >
                           <ExternalLink size={14} />
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
+
                 {tasks.length === 0 && (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>No tasks assigned. You're all caught up!</td>
+                    <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                      No tasks assigned. You're all caught up!
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -514,34 +615,36 @@ const Dashboard = () => {
         </section>
       )}
 
-      {/* --- OPERATOR (USER) VIEW --- */}
-      {user.role === 'USER' && (
+      {/* --- USER VIEW --- */}
+      {user?.role === 'USER' && (
         <div style={styles.userGrid}>
-          {/* Form to report task */}
+          {/* Report task form */}
           <section className="glass-card">
             <h2 style={styles.sectionTitle}>Report Maintenance Request</h2>
             {successMsg && <div style={styles.successBanner}>{successMsg}</div>}
-            
+
             <form onSubmit={handleReportTask}>
               <div className="form-group">
                 <label className="form-label">Asset Machine</label>
-                <select 
+                <select
                   className="form-input form-select"
                   value={assetId}
                   onChange={(e) => setAssetId(e.target.value)}
                 >
                   <option value="">Select Affected Machine...</option>
-                  {assets.map(asset => (
-                    <option key={asset.id} value={asset.id}>{asset.assetName} ({asset.assetCode}) - {asset.location}</option>
+                  {assets.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.assetName} ({asset.assetCode}) - {asset.location}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Issue Title</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
+                <input
+                  type="text"
+                  className="form-input"
                   placeholder="e.g. Hydraulic pump pressure loss"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -550,7 +653,7 @@ const Dashboard = () => {
 
               <div className="form-group">
                 <label className="form-label">Priority Severity</label>
-                <select 
+                <select
                   className="form-input form-select"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
@@ -564,8 +667,8 @@ const Dashboard = () => {
 
               <div className="form-group" style={{ marginBottom: '24px' }}>
                 <label className="form-label">Detailed Description</label>
-                <textarea 
-                  className="form-input" 
+                <textarea
+                  className="form-input"
                   rows="4"
                   placeholder="Describe the issue symptoms, steps leading to the fault..."
                   value={description}
@@ -580,7 +683,7 @@ const Dashboard = () => {
             </form>
           </section>
 
-          {/* List of reported tasks */}
+          {/* My tasks */}
           <section className="glass-card">
             <h2 style={styles.sectionTitle}>My Maintenance Log</h2>
             <div className="table-container">
@@ -595,7 +698,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map(task => (
+                  {tasks.map((task) => (
                     <tr key={task.id}>
                       <td style={{ fontWeight: '600', color: 'hsl(var(--primary))' }}>{task.taskCode}</td>
                       <td>{task.title}</td>
@@ -610,15 +713,22 @@ const Dashboard = () => {
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button onClick={() => navigate(`/tasks/${task.id}`)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                        <button
+                          onClick={() => navigate(`/tasks/${task.id}`)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '13px' }}
+                        >
                           <ExternalLink size={14} />
                         </button>
                       </td>
                     </tr>
                   ))}
+
                   {tasks.length === 0 && (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>You haven't reported any issues yet.</td>
+                      <td colSpan="5" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                        You haven't reported any issues yet.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -628,13 +738,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* --- MODAL: Remarks for Approve/Reject (Manager) --- */}
+      {/* Remarks modal */}
       {showRemarksModal && (
         <div style={styles.modalOverlay}>
           <div className="glass-card animate-fade-in" style={styles.modalCard}>
             <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
               Confirm Task {showRemarksModal.action === 'APPROVE' ? 'Approval' : 'Rejection'}
             </h3>
+
             <form onSubmit={handleApproveRejectTaskSubmit}>
               <div className="form-group" style={{ marginBottom: '24px' }}>
                 <label className="form-label">Review Remarks</label>
@@ -647,9 +758,19 @@ const Dashboard = () => {
                   required
                 />
               </div>
+
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowRemarksModal(null)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className={showRemarksModal.action === 'APPROVE' ? 'btn btn-primary' : 'btn btn-danger'}>
+                <button
+                  type="button"
+                  onClick={() => setShowRemarksModal(null)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={showRemarksModal.action === 'APPROVE' ? 'btn btn-primary' : 'btn btn-danger'}
+                >
                   {showRemarksModal.action === 'APPROVE' ? 'Approve' : 'Reject'}
                 </button>
               </div>
@@ -658,11 +779,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* --- MODAL: Request Materials (Technician) --- */}
+      {/* Material request modal */}
       {showMaterialModal && (
         <div style={styles.modalOverlay}>
           <div className="glass-card animate-fade-in" style={styles.modalCard}>
-            <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>Request Spares/Materials</h3>
+            <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
+              Request Spares/Materials
+            </h3>
+
             <form onSubmit={handleRequestMaterialSubmit}>
               <div className="form-group">
                 <label className="form-label">Item Name</label>
@@ -675,6 +799,7 @@ const Dashboard = () => {
                   required
                 />
               </div>
+
               <div className="form-group" style={{ marginBottom: '24px' }}>
                 <label className="form-label">Quantity</label>
                 <input
@@ -686,9 +811,18 @@ const Dashboard = () => {
                   required
                 />
               </div>
+
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowMaterialModal(false)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Request</button>
+                <button
+                  type="button"
+                  onClick={() => setShowMaterialModal(false)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Submit Request
+                </button>
               </div>
             </form>
           </div>
@@ -770,9 +904,6 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '1fr',
     gap: '32px',
-    '@media(minWidth: 1024px)': {
-      gridTemplateColumns: '1.2fr 0.8fr',
-    }
   },
   userGrid: {
     display: 'grid',
@@ -795,7 +926,7 @@ const styles = {
     width: '100%',
     maxWidth: '480px',
     padding: '32px',
-  }
+  },
 };
 
 export default Dashboard;

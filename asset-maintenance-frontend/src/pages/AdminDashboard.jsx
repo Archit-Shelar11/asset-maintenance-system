@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, api } from '../context/AuthContext';
-import { 
-  AlertTriangle, 
-  ClipboardList, 
-  Clock, 
-  CheckCircle, 
+import { useAuth } from '../context/AuthContext';
+import api from '../api';
+import {
+  AlertTriangle,
+  ClipboardList,
+  Clock,
+  CheckCircle,
   Users as UsersIcon,
-  Wrench,
-  Package,
   ExternalLink,
   Shield
 } from 'lucide-react';
@@ -53,7 +52,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // --- Admin Actions ---
   const handleUserRoleChange = async (userId, newRole) => {
     try {
       await api.put(`/users/${userId}/role/${newRole}`);
@@ -83,6 +81,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     const { taskId, action, taskStatus } = showRemarksModal;
     let endpoint;
+
     if (action === 'APPROVE') {
       endpoint = 'approve';
     } else if (taskStatus === 'REPORTED') {
@@ -111,13 +110,15 @@ const AdminDashboard = () => {
     }
   };
 
-  // Stats
   const getStats = () => {
     const totalTasks = tasks.length;
     const pendingTasks = tasks.filter(t => t.status === 'REPORTED').length;
-    const inProgress = tasks.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'MATERIAL_REQUESTED', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(t.status)).length;
+    const inProgress = tasks.filter(t =>
+      ['ASSIGNED', 'IN_PROGRESS', 'MATERIAL_REQUESTED', 'MATERIAL_APPROVED', 'MATERIAL_REJECTED'].includes(t.status)
+    ).length;
     const completedTasks = tasks.filter(t => t.status === 'APPROVED').length;
     const totalUsers = users.length;
+
     return { totalTasks, pendingTasks, inProgress, completedTasks, totalUsers };
   };
 
@@ -135,9 +136,17 @@ const AdminDashboard = () => {
             <Shield size={28} style={{ display: 'inline', marginRight: '10px', verticalAlign: 'middle' }} />
             Admin Panel
           </h1>
-          <p>Logged in as: <span style={{ color: 'var(--primary)', fontWeight: '500' }}>{user.fullName}</span> ({user.role})</p>
+          <p>
+            Logged in as:{' '}
+            <span style={{ color: 'var(--primary)', fontWeight: '500' }}>
+              {user?.fullName}
+            </span>{' '}
+            ({user?.role})
+          </p>
         </div>
-        <button onClick={fetchData} className="btn btn-secondary">Refresh Data</button>
+        <button onClick={fetchData} className="btn btn-secondary">
+          Refresh Data
+        </button>
       </header>
 
       {error && (
@@ -156,6 +165,7 @@ const AdminDashboard = () => {
             <div style={styles.statLabel}>Total Users</div>
           </div>
         </div>
+
         <div className="glass-card" style={styles.statCard}>
           <ClipboardList size={28} color="hsl(var(--warning))" />
           <div>
@@ -163,6 +173,7 @@ const AdminDashboard = () => {
             <div style={styles.statLabel}>Total Tasks</div>
           </div>
         </div>
+
         <div className="glass-card" style={styles.statCard}>
           <Clock size={28} color="#818cf8" />
           <div>
@@ -170,6 +181,7 @@ const AdminDashboard = () => {
             <div style={styles.statLabel}>Pending</div>
           </div>
         </div>
+
         <div className="glass-card" style={styles.statCard}>
           <CheckCircle size={28} color="hsl(var(--success))" />
           <div>
@@ -193,7 +205,7 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map((u) => (
                 <tr key={u.id}>
                   <td style={{ fontWeight: '600' }}>{u.fullName}</td>
                   <td>{u.email}</td>
@@ -201,7 +213,7 @@ const AdminDashboard = () => {
                     <span className="badge badge-role">{u.role}</span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    {u.id !== user.id && (
+                    {u.id !== user?.id && (
                       <select
                         className="form-input form-select"
                         style={{ width: '160px', padding: '4px 8px', fontSize: '13px' }}
@@ -239,7 +251,7 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {tasks.map(task => (
+              {tasks.map((task) => (
                 <tr key={task.id}>
                   <td style={{ fontWeight: '600', color: 'hsl(var(--primary))' }}>{task.taskCode}</td>
                   <td>{task.title}</td>
@@ -254,33 +266,44 @@ const AdminDashboard = () => {
                       {task.status}
                     </span>
                   </td>
-                  <td>{task.assignedTo ? task.assignedTo.fullName : <span style={{ color: 'hsl(var(--text-dim))' }}>None</span>}</td>
+                  <td>
+                    {task.assignedTo ? task.assignedTo.fullName : <span style={{ color: 'hsl(var(--text-dim))' }}>None</span>}
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={styles.actionGroup}>
-                      {/* Assignment + Reject for Reported tasks */}
                       {task.status === 'REPORTED' && (
                         assigningTaskId === task.id ? (
                           <div style={{ display: 'flex', gap: '8px' }}>
-                            <select 
+                            <select
                               className="form-input form-select"
                               style={{ width: '160px', padding: '6px 12px' }}
                               value={selectedTechId}
                               onChange={(e) => setSelectedTechId(e.target.value)}
                             >
                               <option value="">Select Tech...</option>
-                              {users.filter(u => u.role === 'TECHNICIAN').map(tech => (
-                                <option key={tech.id} value={tech.id}>{tech.fullName}</option>
-                              ))}
+                              {users
+                                .filter((u) => u.role === 'TECHNICIAN')
+                                .map((tech) => (
+                                  <option key={tech.id} value={tech.id}>
+                                    {tech.fullName}
+                                  </option>
+                                ))}
                             </select>
-                            <button onClick={() => handleAssignTask(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
-                            <button onClick={() => setAssigningTaskId(null)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>Cancel</button>
+                            <button onClick={() => handleAssignTask(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                              Assign
+                            </button>
+                            <button onClick={() => setAssigningTaskId(null)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                              Cancel
+                            </button>
                           </div>
                         ) : (
                           <>
-                            <button onClick={() => setAssigningTaskId(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>Assign</button>
-                            <button 
-                              onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'REPORTED' })} 
-                              className="btn btn-danger" 
+                            <button onClick={() => setAssigningTaskId(task.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                              Assign
+                            </button>
+                            <button
+                              onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'REPORTED' })}
+                              className="btn btn-danger"
                               style={{ padding: '6px 12px', fontSize: '13px' }}
                             >
                               Reject
@@ -289,19 +312,25 @@ const AdminDashboard = () => {
                         )
                       )}
 
-                      {/* Approve / Reject for Completed tasks */}
                       {task.status === 'COMPLETED' && (
                         <>
-                          <button 
-                            onClick={() => setShowRemarksModal({ taskId: task.id, action: 'APPROVE', taskStatus: 'COMPLETED' })} 
-                            className="btn btn-primary" 
-                            style={{ padding: '6px 12px', fontSize: '13px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', boxShadow: 'none' }}
+                          <button
+                            onClick={() => setShowRemarksModal({ taskId: task.id, action: 'APPROVE', taskStatus: 'COMPLETED' })}
+                            className="btn btn-primary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '13px',
+                              background: 'rgba(52, 211, 153, 0.15)',
+                              color: '#34d399',
+                              border: '1px solid rgba(52, 211, 153, 0.3)',
+                              boxShadow: 'none'
+                            }}
                           >
                             Approve
                           </button>
-                          <button 
-                            onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'COMPLETED' })} 
-                            className="btn btn-danger" 
+                          <button
+                            onClick={() => setShowRemarksModal({ taskId: task.id, action: 'REJECT', taskStatus: 'COMPLETED' })}
+                            className="btn btn-danger"
                             style={{ padding: '6px 12px', fontSize: '13px' }}
                           >
                             Reject
@@ -309,16 +338,23 @@ const AdminDashboard = () => {
                         </>
                       )}
 
-                      <button onClick={() => navigate(`/tasks/${task.id}`)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                      <button
+                        onClick={() => navigate(`/tasks/${task.id}`)}
+                        className="btn btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '13px' }}
+                      >
                         <ExternalLink size={14} />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
+
               {tasks.length === 0 && (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>No tasks found.</td>
+                  <td colSpan="7" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                    No tasks found.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -342,7 +378,7 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {materialRequests.map(req => (
+              {materialRequests.map((req) => (
                 <tr key={req.id}>
                   <td style={{ fontWeight: '600' }}>{req.materialName}</td>
                   <td>{req.quantity}</td>
@@ -356,16 +392,31 @@ const AdminDashboard = () => {
                   <td style={{ textAlign: 'right' }}>
                     {req.status === 'PENDING' && (
                       <div style={styles.actionGroup}>
-                        <button onClick={() => handleMaterialApproval(req.id, true)} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '12px' }}>Approve</button>
-                        <button onClick={() => handleMaterialApproval(req.id, false)} className="btn btn-danger" style={{ padding: '6px 10px', fontSize: '12px' }}>Reject</button>
+                        <button
+                          onClick={() => handleMaterialApproval(req.id, true)}
+                          className="btn btn-primary"
+                          style={{ padding: '6px 10px', fontSize: '12px' }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleMaterialApproval(req.id, false)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 10px', fontSize: '12px' }}
+                        >
+                          Reject
+                        </button>
                       </div>
                     )}
                   </td>
                 </tr>
               ))}
+
               {materialRequests.length === 0 && (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>No material requests.</td>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'hsl(var(--text-dim))' }}>
+                    No material requests.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -380,6 +431,7 @@ const AdminDashboard = () => {
             <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
               Confirm Task {showRemarksModal.action === 'APPROVE' ? 'Approval' : 'Rejection'}
             </h3>
+
             <form onSubmit={handleApproveRejectTaskSubmit}>
               <div className="form-group" style={{ marginBottom: '24px' }}>
                 <label className="form-label">Review Remarks</label>
@@ -392,9 +444,15 @@ const AdminDashboard = () => {
                   required
                 />
               </div>
+
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowRemarksModal(null)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className={showRemarksModal.action === 'APPROVE' ? 'btn btn-primary' : 'btn btn-danger'}>
+                <button type="button" onClick={() => setShowRemarksModal(null)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={showRemarksModal.action === 'APPROVE' ? 'btn btn-primary' : 'btn btn-danger'}
+                >
                   {showRemarksModal.action === 'APPROVE' ? 'Approve' : 'Reject'}
                 </button>
               </div>

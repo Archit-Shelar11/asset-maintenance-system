@@ -1,30 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 const AuthContext = createContext(null);
-
-// Configure a custom Axios instance
-export const api = axios.create({
-  timeout: 10000,
-});
-
-// Inject the HTTP Basic authentication header on every request
-api.interceptors.request.use(
-  (config) => {
-    const authHeader = localStorage.getItem('authHeader');
-    if (authHeader) {
-      config.headers.Authorization = authHeader;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Add auth header automatically on every request
+  useEffect(() => {
+    const authHeader = localStorage.getItem('authHeader');
+
+    const interceptor = API.interceptors.request.use(
+      (config) => {
+        if (authHeader) {
+          config.headers.Authorization = authHeader;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    return () => API.interceptors.request.eject(interceptor);
+  }, []);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -42,14 +40,13 @@ export const AuthProvider = ({ children }) => {
       const credentials = btoa(`${email}:${password}`);
       const header = `Basic ${credentials}`;
 
-      // Call the profiles endpoint to check credentials and get user profile
-      const response = await axios.get('/users/me', {
+      // Check credentials and fetch logged-in user profile
+      const response = await API.get('/users/me', {
         headers: { Authorization: header },
       });
 
       const userProfile = response.data;
 
-      // Save credentials & user details in state and localStorage
       localStorage.setItem('authHeader', header);
       localStorage.setItem('user', JSON.stringify(userProfile));
       setUser(userProfile);
@@ -57,7 +54,10 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
-      const message = error.response?.data?.message || 'Invalid email or password';
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Invalid email or password';
       return { success: false, error: message };
     }
   };
@@ -70,18 +70,21 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (fullName, email, password) => {
     try {
-      // POST registration details
-      const response = await axios.post('/users/register', {
+      // Register user
+      await API.post('/users/register', {
         fullName,
         email,
         password,
       });
 
-      // Auto login user after registration
+      // Auto-login after successful registration
       return await login(email, password);
     } catch (error) {
       console.error('Registration failed:', error);
-      const message = error.response?.data?.message || 'Registration failed';
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Registration failed';
       return { success: false, error: message };
     }
   };
