@@ -37,19 +37,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/users/register").permitAll()
-                        .anyRequest().authenticated()
-                )
-                // Use Basic auth for credential validation but suppress the browser popup
-                .httpBasic(basic -> basic.authenticationEntryPoint(customAuthEntryPoint()));
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .cors(cors -> {})   // ✅ ENABLE CORS
+            .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+            .requestMatchers("/api/auth/**").permitAll()
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/h2-console/**").permitAll()
+                    .requestMatchers("/users/register").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .httpBasic(basic -> basic.authenticationEntryPoint(customAuthEntryPoint()));
 
-        return http.build();
-    }
+    return http.build();
+}
 }
