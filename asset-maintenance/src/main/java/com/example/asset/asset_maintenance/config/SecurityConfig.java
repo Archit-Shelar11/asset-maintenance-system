@@ -3,6 +3,7 @@ package com.example.asset.asset_maintenance.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,35 +23,30 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Custom entry point that returns a plain 401 JSON response instead of
-     * the WWW-Authenticate: Basic header, which causes browsers to show
-     * their native "Sign in" popup on top of the app's own login form.
-     */
     @Bean
     public AuthenticationEntryPoint customAuthEntryPoint() {
         return (request, response, authException) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage() + "\"}");
+            response.getWriter().write(
+                "{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage() + "\"}"
+            );
         };
     }
 
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-            .cors(cors -> {})   // ✅ ENABLE CORS
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
             .csrf(csrf -> csrf.disable())
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-            .requestMatchers("/api/auth/**").permitAll()
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/h2-console/**").permitAll()
-                    .requestMatchers("/users/register").permitAll()
-                    .anyRequest().authenticated()
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/users/register").permitAll()
+                .anyRequest().authenticated()
             )
             .httpBasic(basic -> basic.authenticationEntryPoint(customAuthEntryPoint()));
 
-    return http.build();
-}
+        return http.build();
+    }
 }
