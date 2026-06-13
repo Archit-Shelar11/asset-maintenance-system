@@ -1,0 +1,119 @@
+================================================================================
+          ASSET MAINTENANCE AUTOMATION SYSTEM - SYSTEM WORKING DIAGRAMS
+================================================================================
+
+This document contains flow charts, sequence diagrams, and architecture descriptions 
+to help you understand exactly how the system operates across all user roles.
+
+--------------------------------------------------------------------------------
+1. HIGH-LEVEL ARCHITECTURE & DATA FLOW
+--------------------------------------------------------------------------------
+
++--------------------------------------------------------------------------+
+|                            REACT FRONTEND (Vite)                         |
+|  - Renders UI based on user role (Operator, Tech, Manager, Admin)        |
+|  - Axios client interceptor attaches HTTP Basic Auth token header        |
++--------------------------------------------------------------------------+
+                                    |
+                                    | HTTP Requests (REST APIs)
+                                    v
++--------------------------------------------------------------------------+
+|                          SPRING BOOT BACKEND (Port 8080)                 |
+|                                                                          |
+|  [Spring Security Filter Chain]                                          |
+|    - Validates "Authorization: Basic Base64(email:password)"             |
+|    - Checks method-level privileges (e.g. @PreAuthorize("hasRole('ADMIN')")|
+|                                                                          |
+|  [Controllers]                                                           |
+|    - RestControllers route requests (Asset, Task, Material, User)        |
+|                                                                          |
+|  [Services & Repositories]                                               |
+|    - Business logic execution & Task history logging                     |
+|    - JPA / Hibernate mapping                                             |
++--------------------------------------------------------------------------+
+                                    |
+                                    | SQL Queries
+                                    v
++--------------------------------------------------------------------------+
+|                             DATABASE (H2 / MySQL)                        |
+|  - Stores Assets, Maintenance Tasks, Materials, Users, Roles, History    |
++--------------------------------------------------------------------------+
+
+--------------------------------------------------------------------------------
+2. ROLE-BASED SEQUENCE FLOW (HOW ROLES INTERACT)
+--------------------------------------------------------------------------------
+
+  OPERATOR                  MANAGER                     TECHNICIAN                ADMIN
+     │                         │                            │                       │
+     │ 1. Reports breakdown    │                            │                       │
+     ├────────────────────────►│                            │                       │
+     │    (e.g., CNC axis jam) │                            │                       │
+     │                         │ 2. Assigns technician      │                       │
+     │                         ├───────────────────────────►│                       │
+     │                         │    (Status: ASSIGNED)      │                       │
+     │                         │                            │                       │
+     │                         │                            │ 3. Clicks "Start"     │
+     │                         │                            ├────────┐              │
+     │                         │                            │        │              │
+     │                         │                            │◄───────┘              │
+     │                         │                            │ (Status: IN_PROGRESS) │
+     │                         │                            │                       │
+     │                         │                            │ 4. Requests parts     │
+     │                         │ 5. Approves / Rejects      │◄───────┤              │
+     │                         │◄───────────────────────────┤                       │
+     │                         │    (MATERIAL_APPROVED/     │                       │
+     │                         │     MATERIAL_REJECTED)     │                       │
+     │                         │                            │                       │
+     │                         │                            │ 6. Marks completed    │
+     │                         │ 7. Reviews completed task  │◄───────┤              │
+     │                         │◄───────────────────────────┤                       │
+     │                         │    (Status: COMPLETED)     │                       │
+     │                         ├────────┐                   │                       │
+     │                         │        │                   │                       │
+     │                         │◄───────┘                   │                       │
+     │                         │                            │                       │
+     │                         ├───────────────────────────►│                       │
+     │                         │  Rejects (Rework needed)   │                       │
+     │                         │  (Status goes back to      │                       │
+     │                         │   IN_PROGRESS)             │                       │
+     │                         │                            │                       │
+     │                         ├────────────────────────────┼──────────────────────►│
+     │                         │                            │                       │ 8. Manages User Roles
+     │                         │                            │                       │    & system assets
+     │                         │                            │                       │    (ADMIN Panel only)
+
+--------------------------------------------------------------------------------
+3. DETAILED MAINTENANCE TASK LIFECYCLE (STATE TRANSITION DIAGRAM)
+--------------------------------------------------------------------------------
+
+  [Operator Reports]
+         │
+         v
+    ( REPORTED ) ──[Manager Rejects reported task]──> ( REJECTED_REPORTED )
+         │
+         │ [Manager Assigns Task to Tech]
+         v
+    ( ASSIGNED )
+         │
+         │ [Tech clicks "Start Work"]
+         v
+  +-> ( IN_PROGRESS ) <───────────────────────────────────────────────────────+
+  │      │                                                                    │
+  │      ├──[Tech needs parts]──> ( MATERIAL_REQUESTED )                      │
+  │      │                             │                                      │
+  │      │                             ├──[Manager Approves]─> ( MAT_APPROVED )
+  │      │                             │                                      │
+  │      │                             └──[Manager Rejects]──> ( MAT_REJECTED )
+  │      │                                                            │
+  │      │ [Tech completes job]                                       │
+  │      +────────────────────────────────────────────────────────────+
+  │                                    │
+  │                                    v
+  │                              ( COMPLETED )
+  │                                    │
+  │                                    ├──[Manager approves work]──> ( APPROVED / CLOSED )
+  │                                    │
+  │                                    └──[Manager rejects work]────> [Loop back to IN_PROGRESS]
+  └────────────────────────────────────┘
+
+================================================================================

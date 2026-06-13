@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
-import { Plus, Search, Filter, AlertTriangle, Layers, Calendar, MapPin, Tag } from 'lucide-react';
+import { Plus, Search, Filter, AlertTriangle, Layers, Calendar, MapPin, Tag, X } from 'lucide-react';
 
 const Assets = () => {
   const { user } = useAuth();
@@ -95,53 +95,58 @@ const Assets = () => {
   });
 
   if (loading) {
-    return <div style={styles.loadingContainer}>Loading asset database...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[40vh] text-slate-500 font-semibold">
+        Loading asset database...
+      </div>
+    );
   }
 
   const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN';
 
   return (
-    <div className="animate-fade-in">
-      <header style={styles.header}>
+    <div className="space-y-6 animate-fade-in">
+      <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-6 border-b border-slate-200">
         <div>
-          <h1 style={{ fontSize: '28px', color: 'var(--text-main)' }}>Asset Registry</h1>
-          <p>Track, manage, and inspect factory machinery and physical assets.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Asset Registry</h1>
+          <p className="text-sm text-slate-500 mt-1">Track, manage, and inspect factory machinery and physical assets.</p>
         </div>
 
         {isManagerOrAdmin && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <Plus size={16} />
+          <button 
+            onClick={() => setShowModal(true)} 
+            className="inline-flex items-center justify-center gap-2 px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="h-4.5 w-4.5" />
             <span>Register New Asset</span>
           </button>
         )}
       </header>
 
       {error && (
-        <div style={styles.errorBanner}>
-          <AlertTriangle size={20} />
+        <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-800 text-sm font-medium">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="glass-card" style={styles.filterBar}>
-        <div style={styles.searchWrapper}>
-          <Search size={18} style={styles.searchIcon} />
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-4 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex items-center flex-grow w-full">
+          <Search className="absolute left-3.5 h-4.5 w-4.5 text-slate-400" />
           <input
             type="text"
-            className="form-input"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-50"
             placeholder="Search by code, name, location or brand..."
-            style={{ paddingLeft: '44px' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        <div style={styles.filterWrapper}>
-          <Filter size={18} style={styles.filterIcon} />
+        <div className="relative flex items-center w-full sm:w-[200px] shrink-0">
+          <Filter className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
           <select
-            className="form-input form-select"
-            style={{ paddingLeft: '40px', width: '200px' }}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-blue-600 focus:bg-white"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -155,45 +160,56 @@ const Assets = () => {
       </div>
 
       {/* Assets Grid */}
-      <div style={styles.grid}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAssets.map((asset) => (
-          <div key={asset.id} className="glass-card" style={styles.card}>
-            <div style={styles.cardHeader}>
-              <span style={styles.assetCode}>{asset.assetCode}</span>
-              <span
-                className={`badge badge-status-${asset.status.toLowerCase()}`}
-                style={badgeStyle(asset.status)}
-              >
-                {asset.status}
-              </span>
+          <div key={asset.id} className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md hover:border-slate-300 transition-all p-6 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="font-mono font-bold text-xs text-blue-600 tracking-wider uppercase">
+                  {asset.assetCode}
+                </span>
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
+                    asset.status === 'OPERATIONAL'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/40'
+                      : asset.status === 'DEGRADED'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
+                      : asset.status === 'UNDER_MAINTENANCE'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200/40'
+                      : 'bg-rose-50 text-rose-700 border border-rose-200/40'
+                  }`}
+                >
+                  {asset.status.replace('_', ' ')}
+                </span>
+              </div>
+
+              <h3 className="text-base font-bold text-slate-900">{asset.assetName}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                {asset.description || 'No description available for this machine.'}
+              </p>
             </div>
 
-            <h3 style={styles.assetName}>{asset.assetName}</h3>
-            <p style={styles.description}>
-              {asset.description || 'No description available for this machine.'}
-            </p>
-
-            <div style={styles.metaSection}>
-              <div style={styles.metaItem}>
-                <Tag size={14} color="#94a3b8" />
+            <div className="border-t border-slate-100 pt-4 flex flex-col gap-2.5 text-xs text-slate-600 font-medium">
+              <div className="flex items-center gap-2">
+                <Tag className="h-3.5 w-3.5 text-slate-400" />
                 <span>{asset.category}</span>
               </div>
 
-              <div style={styles.metaItem}>
-                <MapPin size={14} color="#94a3b8" />
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400" />
                 <span>{asset.location}</span>
               </div>
 
               {asset.manufacturer && (
-                <div style={styles.metaItem}>
-                  <Layers size={14} color="#94a3b8" />
+                <div className="flex items-center gap-2">
+                  <Layers className="h-3.5 w-3.5 text-slate-400" />
                   <span>{asset.manufacturer}</span>
                 </div>
               )}
 
               {asset.installationDate && (
-                <div style={styles.metaItem}>
-                  <Calendar size={14} color="#94a3b8" />
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
                   <span>Installed: {asset.installationDate}</span>
                 </div>
               )}
@@ -202,27 +218,33 @@ const Assets = () => {
         ))}
 
         {filteredAssets.length === 0 && (
-          <div style={styles.emptyContainer}>
-            <Layers size={48} color="hsl(var(--text-dim))" />
-            <p style={{ marginTop: '16px' }}>No machinery assets match your filters.</p>
+          <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 space-y-4">
+            <Layers className="h-12 w-12 text-slate-300" />
+            <p className="text-sm font-medium">No machinery assets match your filters.</p>
           </div>
         )}
       </div>
 
       {/* Register Asset Modal */}
       {showModal && (
-        <div style={styles.modalOverlay}>
-          <div className="glass-card animate-fade-in" style={styles.modalCard}>
-            <h3 style={{ fontSize: '20px', color: 'var(--text-main)', marginBottom: '20px' }}>
-              Register Industrial Asset
-            </h3>
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 animate-fade-in">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900">Register Industrial Asset</h3>
+              <button 
+                onClick={() => setShowModal(false)} 
+                className="text-slate-400 hover:text-slate-600 rounded-lg p-1 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateAsset} style={styles.formGrid}>
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Asset Code</label>
+            <form onSubmit={handleCreateAsset} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Asset Code</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   placeholder="e.g. CNC-301"
                   value={assetCode}
                   onChange={(e) => setAssetCode(e.target.value)}
@@ -230,11 +252,11 @@ const Assets = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Asset Name</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Asset Name</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   placeholder="e.g. 5-Axis Milling Machine"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
@@ -242,11 +264,11 @@ const Assets = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Category</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Category</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   placeholder="e.g. Milling, Logistics, Hydraulics"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -254,10 +276,10 @@ const Assets = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Operating Status</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Operating Status</label>
                 <select
-                  className="form-input form-select"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                 >
@@ -268,32 +290,32 @@ const Assets = () => {
                 </select>
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Manufacturer</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Manufacturer</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   placeholder="e.g. Siemens, KUKA"
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
-                <label className="form-label">Installation Date</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">Installation Date</label>
                 <input
                   type="date"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   value={installationDate}
                   onChange={(e) => setInstallationDate(e.target.value)}
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                <label className="form-label">Factory Location</label>
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Factory Location</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   placeholder="e.g. Section A - Machining Center"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
@@ -301,10 +323,10 @@ const Assets = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: 'span 2', marginBottom: '24px' }}>
-                <label className="form-label">Machine Specifications</label>
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Machine Specifications</label>
                 <textarea
-                  className="form-input"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-850 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   rows="3"
                   placeholder="Input dimensions, electrical specifications, warning constraints..."
                   value={description}
@@ -312,11 +334,18 @@ const Assets = () => {
                 />
               </div>
 
-              <div style={styles.modalActions}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
+              <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  className="inline-flex items-center justify-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold text-xs transition-all cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm shadow-blue-500/10"
+                >
                   Save Machine
                 </button>
               </div>
@@ -326,166 +355,6 @@ const Assets = () => {
       )}
     </div>
   );
-};
-
-const badgeStyle = (status) => {
-  switch (status) {
-    case 'OPERATIONAL':
-      return { background: '#d1fae5', color: '#047857' };
-    case 'DEGRADED':
-      return { background: '#fef3c7', color: '#b45309' };
-    case 'UNDER_MAINTENANCE':
-      return { background: '#dbeafe', color: '#1d4ed8' };
-    case 'OFFLINE':
-      return { background: '#fee2e2', color: '#b91c1c' };
-    default:
-      return {};
-  }
-};
-
-const styles = {
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '32px',
-  },
-  loadingContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '60vh',
-    fontSize: '18px',
-    color: 'var(--text-muted)',
-  },
-  errorBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '16px',
-    background: 'rgba(220, 38, 38, 0.08)',
-    border: '1px solid rgba(220, 38, 38, 0.15)',
-    borderRadius: '12px',
-    color: 'var(--danger)',
-    marginBottom: '24px',
-  },
-  filterBar: {
-    display: 'flex',
-    gap: '24px',
-    marginBottom: '32px',
-    alignItems: 'center',
-  },
-  searchWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    flexGrow: 1,
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: '16px',
-    color: 'var(--text-dim)',
-  },
-  filterWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  filterIcon: {
-    position: 'absolute',
-    left: '16px',
-    color: 'var(--text-dim)',
-    pointerEvents: 'none',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '24px',
-  },
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
-  assetCode: {
-    fontFamily: 'var(--font-family-title)',
-    fontWeight: '700',
-    fontSize: '15px',
-    color: 'var(--primary)',
-    letterSpacing: '0.05em',
-  },
-  assetName: {
-    fontSize: '18px',
-    color: 'var(--text-main)',
-    marginBottom: '10px',
-  },
-  description: {
-    fontSize: '14px',
-    color: 'var(--text-muted)',
-    flexGrow: 1,
-    marginBottom: '20px',
-    display: '-webkit-box',
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-  },
-  metaSection: {
-    borderTop: '1px solid var(--border-color)',
-    paddingTop: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  metaItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-  },
-  emptyContainer: {
-    gridColumn: '1 / -1',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '80px',
-    color: 'var(--text-dim)',
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(15, 23, 42, 0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: '560px',
-    padding: '32px',
-  },
-  formGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
-  },
-  modalActions: {
-    gridColumn: 'span 2',
-    display: 'flex',
-    gap: '12px',
-    justifyContent: 'flex-end',
-    marginTop: '12px',
-  },
 };
 
 export default Assets;

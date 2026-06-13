@@ -7,22 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Add auth header automatically on every request
-  useEffect(() => {
-    const authHeader = localStorage.getItem('authHeader');
 
-    const interceptor = API.interceptors.request.use(
-      (config) => {
-        if (authHeader) {
-          config.headers.Authorization = authHeader;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    return () => API.interceptors.request.eject(interceptor);
-  }, []);
 
   // Initialize auth state on mount
   useEffect(() => {

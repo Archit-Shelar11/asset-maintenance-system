@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Assets from './pages/Assets';
 import TaskDetail from './pages/TaskDetail';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -37,6 +38,9 @@ function App() {
 
             {/* Task Detail */}
             <Route path="tasks/:id" element={<TaskDetail />} />
+
+            {/* User Profile */}
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           {/* Catch-all Redirect */}

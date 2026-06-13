@@ -2,7 +2,7 @@ package com.example.asset.asset_maintenance.config;
 
 import com.example.asset.asset_maintenance.entity.*;
 import com.example.asset.asset_maintenance.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -11,22 +11,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private UserRoleRepository userRoleRepository;
-
-    @Autowired
-    private AssetRepository assetRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final AssetRepository assetRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -54,7 +46,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         User managerUser = userRepository.findByEmail("manager@factory.com")
                 .orElseGet(() -> {
                     User newManager = User.builder()
-                            .fullName("Marcus Vance")
+                            .fullName("Aarav Sharma")
                             .email("manager@factory.com")
                             .password(passwordEncoder.encode("password123"))
                             .isActive(true)
@@ -68,7 +60,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Admin
         userRepository.findByEmail("admin@factory.com").orElseGet(() -> {
             User adminUser = User.builder()
-                    .fullName("Chief Administrator")
+                    .fullName("Rohan Mehta")
                     .email("admin@factory.com")
                     .password(passwordEncoder.encode("password123"))
                     .isActive(true)
@@ -81,7 +73,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Technician 1
         userRepository.findByEmail("tech1@factory.com").orElseGet(() -> {
             User tech1 = User.builder()
-                    .fullName("Elena Rostova")
+                    .fullName("Arjun Patil")
                     .email("tech1@factory.com")
                     .password(passwordEncoder.encode("password123"))
                     .isActive(true)
@@ -94,7 +86,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Technician 2
         userRepository.findByEmail("tech2@factory.com").orElseGet(() -> {
             User tech2 = User.builder()
-                    .fullName("Julian Hales")
+                    .fullName("Amit Shinde")
                     .email("tech2@factory.com")
                     .password(passwordEncoder.encode("password123"))
                     .isActive(true)
@@ -107,7 +99,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Operator 1
         userRepository.findByEmail("user1@factory.com").orElseGet(() -> {
             User op1 = User.builder()
-                    .fullName("Frank Miller")
+                    .fullName("Vijay Kumar")
                     .email("user1@factory.com")
                     .password(passwordEncoder.encode("password123"))
                     .isActive(true)
@@ -120,7 +112,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Operator 2
         userRepository.findByEmail("user2@factory.com").orElseGet(() -> {
             User op2 = User.builder()
-                    .fullName("Sarah Connor")
+                    .fullName("Neha Joshi")
                     .email("user2@factory.com")
                     .password(passwordEncoder.encode("password123"))
                     .isActive(true)

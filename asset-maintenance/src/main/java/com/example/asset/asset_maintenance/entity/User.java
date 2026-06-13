@@ -34,6 +34,14 @@ public class User {
     private Boolean isActive = true;
     //just not to delete the record of the other tabje  we will just mark it as false
 
+    @JsonIgnore
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @JsonIgnore
+    @Column(name = "reset_token_expiry")
+    private LocalDateTime resetTokenExpiry;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

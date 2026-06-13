@@ -4,20 +4,18 @@ import com.example.asset.asset_maintenance.entity.Asset;
 import com.example.asset.asset_maintenance.entity.User;
 import com.example.asset.asset_maintenance.repository.AssetRepository;
 import com.example.asset.asset_maintenance.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AssetService {
 
-    @Autowired
-    private AssetRepository assetRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final AssetRepository assetRepository;
+    private final UserRepository userRepository;
 
     /**
      * Create a new asset and associate it with the manager who creates it.

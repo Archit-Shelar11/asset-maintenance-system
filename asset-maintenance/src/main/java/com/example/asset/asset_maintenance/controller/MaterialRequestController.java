@@ -3,7 +3,8 @@ package com.example.asset.asset_maintenance.controller;
 import com.example.asset.asset_maintenance.dto.MaterialRequestDTO;
 import com.example.asset.asset_maintenance.entity.MaterialRequest;
 import com.example.asset.asset_maintenance.service.MaterialRequestService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,14 +13,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/materials")
+@RequiredArgsConstructor
 public class MaterialRequestController {
 
-    @Autowired
-    private MaterialRequestService materialService;
+    private final MaterialRequestService materialService;
 
     @PostMapping("/request")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    public MaterialRequest requestMaterial(@RequestBody MaterialRequestDTO request, Principal principal) {
+    public MaterialRequest requestMaterial(@Valid @RequestBody MaterialRequestDTO request, Principal principal) {
         return materialService.requestMaterial(
                 request.getTaskId(),
                 request.getMaterialName(),

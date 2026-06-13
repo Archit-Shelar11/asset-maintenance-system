@@ -7,29 +7,25 @@ import com.example.asset.asset_maintenance.entity.User;
 import com.example.asset.asset_maintenance.repository.MaintenanceTaskRepository;
 import com.example.asset.asset_maintenance.repository.TaskDiscussionRepository;
 import com.example.asset.asset_maintenance.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TaskDiscussionService {
 
-    @Autowired
-    private TaskDiscussionRepository discussionRepository;
+    private final TaskDiscussionRepository discussionRepository;
+    private final MaintenanceTaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private MaintenanceTaskRepository taskRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public TaskDiscussion addComment(Long taskId, Long userId, String message) {
+    public TaskDiscussion addComment(Long taskId, String userEmail, String message) {
 
         MaintenanceTask task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         TaskDiscussion discussion = new TaskDiscussion();

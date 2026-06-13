@@ -49,86 +49,87 @@ const Login = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div className="glass-card animate-fade-in" style={styles.card}>
+    <div className="flex items-center justify-center min-h-screen w-screen p-6 bg-slate-50">
+      <div className="w-full max-w-[440px] bg-white border border-slate-200/80 rounded-2xl shadow-sm p-10 space-y-8 animate-fade-in">
         {/* Header Logo */}
-        <div style={styles.logoContainer}>
-          <div style={styles.logoGlow}>
-            <Wrench size={32} color="hsl(var(--primary))" />
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 border border-blue-100 rounded-2xl text-blue-600">
+            <Wrench className="h-8 w-8" />
           </div>
-          <h1 style={styles.title}>Asset Maintenance</h1>
-          <p style={{ fontSize: '14px', marginTop: '4px' }}>Automation System Portal</p>
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Asset Maintenance</h1>
+            <p className="text-sm text-slate-500 mt-1">Automation System Portal</p>
+          </div>
         </div>
 
         {/* Error Notification */}
         {error && (
-          <div style={styles.errorAlert}>
-            <AlertCircle size={18} />
+          <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-800 text-sm font-medium animate-fade-in">
+            <AlertCircle className="h-5 w-5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Auth Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
-            <div className="form-group">
-              <label className="form-label">Full Name</label>
-              <div style={styles.inputWrapper}>
-                <UserIcon style={styles.inputIcon} size={16} />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">Full Name</label>
+              <div className="relative flex items-center">
+                <UserIcon className="absolute left-4 h-4 w-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
-                  className="form-input"
-                  style={{ paddingLeft: '44px' }}
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </div>
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <div style={styles.inputWrapper}>
-              <Mail style={styles.inputIcon} size={16} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600">Email Address</label>
+            <div className="relative flex items-center">
+              <Mail className="absolute left-4 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="email"
-                className="form-input"
-                style={{ paddingLeft: '44px' }}
+                className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
                 placeholder="operator@factory.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '28px' }}>
-            <label className="form-label">Password</label>
-            <div style={styles.inputWrapper}>
-              <Lock style={styles.inputIcon} size={16} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600">Password</label>
+            <div className="relative flex items-center">
+              <Lock className="absolute left-4 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="password"
-                className="form-input"
-                style={{ paddingLeft: '44px' }}
+                className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '14px' }}
             disabled={loading}
+            className="w-full inline-flex items-center justify-center px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl font-semibold text-sm transition-all focus:ring-4 focus:ring-blue-100 cursor-pointer disabled:cursor-not-allowed"
           >
             {loading ? 'Processing...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
         {/* Toggle Mode */}
-        <div style={styles.toggleText}>
+        <div className="text-center text-sm text-slate-500">
           {isRegister ? 'Already have an account?' : "Don't have an account yet?"}{' '}
           <button
             type="button"
@@ -136,7 +137,7 @@ const Login = () => {
               setIsRegister(!isRegister);
               setError('');
             }}
-            style={styles.toggleBtn}
+            className="text-blue-650 hover:text-blue-805 font-bold transition-all ml-1 cursor-pointer bg-transparent border-none outline-none"
           >
             {isRegister ? 'Sign In' : 'Register Now'}
           </button>
@@ -144,84 +145,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    width: '100vw',
-    padding: '24px',
-    background: 'var(--bg-main)',
-  },
-  card: {
-    width: '100%',
-    maxWidth: '440px',
-    padding: '40px',
-  },
-  logoContainer: {
-    textAlign: 'center',
-    marginBottom: '32px',
-  },
-  logoGlow: {
-    width: '64px',
-    height: '64px',
-    borderRadius: '16px',
-    background: '#eff6ff',
-    border: '1px solid #dbeafe',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '16px',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: 'var(--text-main)',
-  },
-  inputWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: '16px',
-    color: 'var(--text-dim)',
-    pointerEvents: 'none',
-  },
-  errorAlert: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '12px 16px',
-    borderRadius: '10px',
-    background: 'rgba(220, 38, 38, 0.08)',
-    border: '1px solid rgba(220, 38, 38, 0.15)',
-    color: 'var(--danger)',
-    fontSize: '14px',
-    marginBottom: '24px',
-  },
-  toggleText: {
-    textAlign: 'center',
-    marginTop: '24px',
-    fontSize: '14px',
-    color: 'var(--text-muted)',
-  },
-  toggleBtn: {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--primary)',
-    fontWeight: '600',
-    cursor: 'pointer',
-    fontSize: '14px',
-    outline: 'none',
-    padding: 0,
-    marginLeft: '4px',
-    transition: 'color 0.2s ease',
-  },
 };
 
 export default Login;

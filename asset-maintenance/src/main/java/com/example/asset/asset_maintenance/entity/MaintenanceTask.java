@@ -3,6 +3,7 @@ package com.example.asset.asset_maintenance.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "maintenance_tasks")
@@ -59,6 +60,15 @@ public class MaintenanceTask {
 
     @Column(name = "manager_remarks", columnDefinition = "TEXT")
     private String managerRemarks;
+
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @OneToOne(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ServiceReport serviceReport;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Attachment> attachments;
 
     //  Audit fields
     @Column(name = "created_at")

@@ -8,7 +8,8 @@ import com.example.asset.asset_maintenance.entity.UserRole;
 import com.example.asset.asset_maintenance.repository.RoleRepository;
 import com.example.asset.asset_maintenance.repository.UserRepository;
 import com.example.asset.asset_maintenance.repository.UserRoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,19 +20,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private UserRoleRepository userRoleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public List<UserDTO> getAllUsers() {
@@ -40,7 +35,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public UserDTO registerUser(@RequestBody RegisterRequest request) {
+    public UserDTO registerUser(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("User with this email already exists");
         }
@@ -115,6 +110,7 @@ public class UserController {
 
         return mapToDTO(user);
     }
+
 
     private UserDTO mapToDTO(User u) {
         String roleName = "USER";
