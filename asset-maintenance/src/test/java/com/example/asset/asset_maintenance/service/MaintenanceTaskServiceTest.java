@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,6 +35,8 @@ class MaintenanceTaskServiceTest {
     @Mock private NotificationService notificationService;
     @Mock private AttachmentRepository attachmentRepository;
     @Mock private ServiceReportRepository serviceReportRepository;
+    @Mock private EntityManager entityManager;
+    @Mock private TypedQuery<MaintenanceTask> typedQuery;
 
     @InjectMocks
     private MaintenanceTaskService taskService;
@@ -169,12 +173,17 @@ class MaintenanceTaskServiceTest {
     void testSearchTasksManagerHasFullVisibility() {
         when(userRepository.findByEmail("manager@example.com")).thenReturn(Optional.of(manager));
         List<MaintenanceTask> mockList = Arrays.asList(task);
-        when(taskRepository.searchTasks(any(), any(), any())).thenReturn(mockList);
+        
+        when(entityManager.createQuery(anyString(), eq(MaintenanceTask.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(mockList);
 
         List<MaintenanceTask> result = taskService.searchTasks(null, null, "Belt", "manager@example.com");
 
         assertEquals(1, result.size());
-        verify(taskRepository, times(1)).searchTasks(null, null, "Belt");
+        verify(entityManager, times(1)).createQuery(anyString(), eq(MaintenanceTask.class));
+        verify(typedQuery, times(1)).setParameter("keyword", "%Belt%");
+        verify(typedQuery, times(1)).getResultList();
     }
 
     @Test
@@ -184,11 +193,14 @@ class MaintenanceTaskServiceTest {
         MaintenanceTask assignedToTech = MaintenanceTask.builder().reportedBy(operator).assignedTo(technician).build();
         MaintenanceTask assignedToOther = MaintenanceTask.builder().reportedBy(operator).assignedTo(User.builder().email("other@example.com").build()).build();
         
-        when(taskRepository.searchTasks(any(), any(), any())).thenReturn(Arrays.asList(assignedToTech, assignedToOther));
+        when(entityManager.createQuery(anyString(), eq(MaintenanceTask.class))).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(Arrays.asList(assignedToTech, assignedToOther));
 
         List<MaintenanceTask> result = taskService.searchTasks(null, null, null, "tech@example.com");
 
         assertEquals(1, result.size());
         assertEquals(technician, result.get(0).getAssignedTo());
+        verify(entityManager, times(1)).createQuery(anyString(), eq(MaintenanceTask.class));
+        verify(typedQuery, times(1)).getResultList();
     }
 }
