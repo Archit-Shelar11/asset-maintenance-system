@@ -56,5 +56,15 @@ test_backend:
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
   script:
+    - chmod +x ./asset-maintenance/mvnw
     - cd asset-maintenance
     - ./mvnw test
+
+test_frontend:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd asset-maintenance-frontend
+    - npm ci
+    - npm run test -- --run
+
