@@ -327,7 +327,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080'
-    : 'https://asset-maintenance-system-liri.onrender.com',
+    : 'https://asset-maintenance-system-ftim.onrender.com',
   timeout: 10000,
 });
 
