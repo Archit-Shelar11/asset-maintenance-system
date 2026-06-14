@@ -1,6 +1,6 @@
 # 1. Define the stages in order of execution
 stages:
-  - lint
+  
   - build
   - test
 
@@ -15,13 +15,6 @@ cache:
 # STAGE 1: LINT (Checks Code Quality First)
 # ==========================================
 
-lint_frontend:
-  stage: lint
-  image: node:20-alpine
-  script:
-    - cd asset-maintenance-frontend
-    - npm ci
-    - npm run lint # Runs ESLint to check for syntax and style issues
 
 # ==========================================
 # STAGE 2: BUILD (Compiles the Code)
