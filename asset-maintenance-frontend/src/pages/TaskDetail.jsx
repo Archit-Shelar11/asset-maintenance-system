@@ -126,7 +126,7 @@ const TaskDetail = () => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     // Serve from the backend server port
-    return `http://localhost:8080${path}`;
+    return `${api.defaults.baseURL}${path}`;
   };
 
   if (loading && !task) {
