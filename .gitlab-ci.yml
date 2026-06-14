@@ -1,0 +1,67 @@
+# 1. Define the stages in order of execution
+stages:
+  - lint
+  - build
+  - test
+
+# 2. Caching rules (re-uses libraries to make pipelines fast)
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository/
+    - asset-maintenance-frontend/node_modules/
+
+# ==========================================
+# STAGE 1: LINT (Checks Code Quality First)
+# ==========================================
+
+lint_frontend:
+  stage: lint
+  image: node:20-alpine
+  script:
+    - cd asset-maintenance-frontend
+    - npm ci
+    - npm run lint # Runs ESLint to check for syntax and style issues
+
+# ==========================================
+# STAGE 2: BUILD (Compiles the Code)
+# ==========================================
+
+build_backend:
+  stage: build
+  image: eclipse-temurin:21-jdk-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  script:
+    - chmod +x ./asset-maintenance/mvnw
+    - cd asset-maintenance
+    - ./mvnw clean package -DskipTests
+  artifacts:
+    paths:
+      - asset-maintenance/target/*.jar
+    expire_in: 1 week
+
+build_frontend:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd asset-maintenance-frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - asset-maintenance-frontend/dist/
+    expire_in: 1 week
+
+# ==========================================
+# STAGE 3: TEST (Runs Automated Tests)
+# ==========================================
+
+test_backend:
+  stage: test
+  image: eclipse-temurin:21-jdk-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  script:
+    - cd asset-maintenance
+    - ./mvnw test
