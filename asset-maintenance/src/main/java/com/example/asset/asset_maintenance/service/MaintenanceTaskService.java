@@ -17,6 +17,7 @@ import com.example.asset.asset_maintenance.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class MaintenanceTaskService {
     private final NotificationService notificationService;
     private final AttachmentRepository attachmentRepository;
     private final ServiceReportRepository serviceReportRepository;
+    private final EntityManager entityManager;
 
     //  CREATE TASK
     public MaintenanceTask createTask(CreateTaskRequest request, String email) {
@@ -494,7 +496,30 @@ public class MaintenanceTaskService {
         String roleName = user.getUserRoles().get(0).getRole().getRoleName().name();
         String keywordParam = keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null;
 
-        List<MaintenanceTask> results = taskRepository.searchTasks(status, priority, keywordParam);
+        // Build dynamic query to avoid PostgreSQL parameter type resolution issues with null parameters
+        StringBuilder jpql = new StringBuilder("SELECT t FROM MaintenanceTask t WHERE 1=1");
+        if (status != null) {
+            jpql.append(" AND t.status = :status");
+        }
+        if (priority != null) {
+            jpql.append(" AND t.priority = :priority");
+        }
+        if (keywordParam != null) {
+            jpql.append(" AND (LOWER(t.title) LIKE LOWER(:keyword) OR LOWER(t.description) LIKE LOWER(:keyword))");
+        }
+
+        var query = entityManager.createQuery(jpql.toString(), MaintenanceTask.class);
+        if (status != null) {
+            query.setParameter("status", status);
+        }
+        if (priority != null) {
+            query.setParameter("priority", priority);
+        }
+        if (keywordParam != null) {
+            query.setParameter("keyword", "%" + keywordParam + "%");
+        }
+
+        List<MaintenanceTask> results = query.getResultList();
 
         if (roleName.equals("ADMIN") || roleName.equals("MANAGER")) {
             return results;

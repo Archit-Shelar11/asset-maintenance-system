@@ -10,8 +10,7 @@ import {
   Search,
   ExternalLink,
   X,
-  Send,
-  Users
+  Send
 } from 'lucide-react';
 
 const ManagerDashboard = () => {
@@ -415,120 +414,75 @@ const ManagerDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Material Request Management */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 text-slate-900">Material Request Approvals</h2>
-            <p className="text-xs text-slate-500 mt-1">Review parts and spares requested by technicians</p>
-          </div>
-
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase">
-                  <th className="px-4 py-3">Material</th>
-                  <th className="px-4 py-3">Quantity</th>
-                  <th className="px-4 py-3">Requested By</th>
-                  <th className="px-4 py-3">Task Code</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {materialRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/50 transition-all">
-                    <td className="px-4 py-3 font-semibold text-slate-900">{req.materialName}</td>
-                    <td className="px-4 py-3 font-semibold">{req.quantity}</td>
-                    <td className="px-4 py-3">{req.requestedBy?.fullName}</td>
-                    <td className="px-4 py-3 font-medium text-blue-600">{req.task?.taskCode}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          req.status === 'PENDING'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
-                            : req.status === 'APPROVED'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/40'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200/40'
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {req.status === 'PENDING' && (
-                        <div className="inline-flex gap-1.5 justify-end">
-                          <button
-                            onClick={() => handleMaterialApproval(req.id, true)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-all cursor-pointer"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleMaterialApproval(req.id, false)}
-                            className="px-2.5 py-1 bg-rose-50 border border-rose-200/50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold text-xs transition-all cursor-pointer"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-
-                {materialRequests.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-slate-400 text-sm">
-                      No material requests pending.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+      {/* Material Request Management */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-6">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 text-slate-900">Material Request Approvals</h2>
+          <p className="text-xs text-slate-500 mt-1">Review parts and spares requested by technicians</p>
         </div>
 
-        {/* User Role Configuration */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 text-slate-900 flex items-center gap-2">
-              <Users className="h-5 w-5 text-slate-400" />
-              <span>User & Role Permissions</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">Configure staff hierarchy roles on the factory floor</p>
-          </div>
-
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase">
-                  <th className="px-4 py-3">Full Name</th>
-                  <th className="px-4 py-3">Email Address</th>
-                  <th className="px-4 py-3 text-right">Assigned Role</th>
+        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase">
+                <th className="px-4 py-3">Material</th>
+                <th className="px-4 py-3">Quantity</th>
+                <th className="px-4 py-3">Requested By</th>
+                <th className="px-4 py-3">Task Code</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {materialRequests.map((req) => (
+                <tr key={req.id} className="hover:bg-slate-50/50 transition-all">
+                  <td className="px-4 py-3 font-semibold text-slate-900">{req.materialName}</td>
+                  <td className="px-4 py-3 font-semibold">{req.quantity}</td>
+                  <td className="px-4 py-3">{req.requestedBy?.fullName}</td>
+                  <td className="px-4 py-3 font-medium text-blue-600">{req.task?.taskCode}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        req.status === 'PENDING'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
+                          : req.status === 'APPROVED'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/40'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200/40'
+                      }`}
+                    >
+                      {req.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {req.status === 'PENDING' && (
+                      <div className="inline-flex gap-1.5 justify-end">
+                        <button
+                          onClick={() => handleMaterialApproval(req.id, true)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-all cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleMaterialApproval(req.id, false)}
+                          className="px-2.5 py-1 bg-rose-50 border border-rose-200/50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold text-xs transition-all cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/50 transition-all">
-                    <td className="px-4 py-3 font-semibold text-slate-900">{u.fullName}</td>
-                    <td className="px-4 py-3 text-slate-500">{u.email}</td>
-                    <td className="px-4 py-3 text-right">
-                      <select
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
-                        value={u.role}
-                        onChange={(e) => handleUserRoleChange(u.id, e.target.value)}
-                      >
-                        <option value="USER">OPERATOR (USER)</option>
-                        <option value="TECHNICIAN">TECHNICIAN</option>
-                        <option value="MANAGER">MANAGER</option>
-                        <option value="ADMIN">ADMINISTRATOR</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+
+              {materialRequests.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-4 py-8 text-center text-slate-400 text-sm">
+                    No material requests pending.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
